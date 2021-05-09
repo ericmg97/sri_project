@@ -26,6 +26,7 @@ class IRSystem(object):
     #################################################################################    
     def __init__(self, corpus, queries):
         __metaclass__ = abc.ABCMeta
+        self.ranking_query = []
         self.corpus=corpus
         self.queries=queries
 
@@ -95,7 +96,7 @@ class IRSystem(object):
         ranking = sorted(enumerate(sim), key=itemgetter(1), reverse=True)
         self.ranking_query[query_id]=ranking # store the ranking of the query in a dict
         for doc, score in ranking:
-            print ("[ Score = " + "%.3f" % round(score, 3) + "] " + corpus[doc]);
+            print ("[ Score = " + "%.3f" % round(score, 3) + "] " + corpus[doc])
       
     #################################################################################
     ## @brief   create_query_view
@@ -149,7 +150,7 @@ class IRSystem(object):
            for q in queries:
                print("\n-------------------------->Query = " + q ) 
                self.ranking_function(corpus,q,query_id,mode)
-               query_id += 1;
+               query_id += 1
              
         else:
             print("\n-------------------------->Query = " + queries ) 

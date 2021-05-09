@@ -16,8 +16,8 @@ class RocchioAlgorithm(object):
     def getQueryVector(self,query,dictionary):
         queryVector = [0] * len(dictionary)
         for word in query.split():
-		    pos = dictionary[word]
-		    queryVector[pos] = queryVector[pos] + 1
+            pos = dictionary[word]
+            queryVector[pos] = queryVector[pos] + 1
         return queryVector	
 
     def execute_rocchio(self,dictionary,relevance, queryVector, alpha, beta, gamma):
