@@ -7,7 +7,7 @@ class RocchioAlgorithm(object):
     #           relevance_judgments ID's of the relevant documents
     #################################################################################    
     def __init__(self,query,corpus,relevance_judgments,ir):
-        dictionary,pdocs = ir.create_dictionary(corpus)
+        dictionary,_ = ir.create_dictionary(corpus)
         queryVector = ir.create_query_view(query,dictionary)        
         query_mod = self.execute_rocchio(dictionary,relevance_judgments, queryVector, 1, .75, .15)
         self.new_query = self.getNewQuery(query, query_mod, dictionary)
@@ -45,9 +45,6 @@ class RocchioAlgorithm(object):
               term1[pos][1] = term1[pos][1] + term2[0] + term3[0]
               pos += 1  
         return term1
-	    # modQueryVec = [sum(term1) for wordCol in zip(term1,term2,term3)]
-	    # modQueryVec = [sum(wordCol) for wordCol in zip(term1,term2,term3)]
-
 
     def getKey(self,item):
         return item[1]

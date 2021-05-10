@@ -19,23 +19,11 @@ import numpy as np
 ###################################################################################
 class IRSystem(object):
     
-    #################################################################################
-    ## @brief   Constructor
-    #  @details This method initializes the class with the parameters introduced by 
-    #           the user and execute the query. 
-    #################################################################################    
     def __init__(self, corpus, queries):
-        __metaclass__ = abc.ABCMeta
         self.ranking_query = []
         self.corpus=corpus
         self.queries=queries
-
-
-    #################################################################################
-    ## @brief   preprocess_document
-    #  @details This method return the taxonomy of keywords for the given document.
-    #  @param   doc The document to be preprocessed
-    #################################################################################    
+  
     def preprocess_document(self,doc):
         stopset = set(stopwords.words('english'))
         stemmer = PorterStemmer()
@@ -44,45 +32,20 @@ class IRSystem(object):
         final = [stemmer.stem(word) for word in clean]
         return final
 
-
-    #################################################################################
-    ## @brief   create_dictionary
-    #  @details This method creates a dictionary based on the taxonomy of keywords for each document.
-    #  @param   docs The documents to be preprocessed
-    #################################################################################    
     def create_dictionary(self,docs):
         pdocs = [self.preprocess_document(doc) for doc in docs]
         dictionary = corpora.Dictionary(pdocs)
         dictionary.save('vsm.dict')
         return dictionary,pdocs
-
-    #################################################################################
-    ## @brief   get_keyword_to_id_mapping
-    #  @details This method prints the tokens id (word counts) for the given dictionary.
-    #  @param   dictionary The dictionary with the documents keywords.
-    #################################################################################    
+  
     def get_keyword_to_id_mapping(self,dictionary):
-        print (dictionary.token2id)
+        print(dictionary.token2id)
 
-    #################################################################################
-    ## @brief   docs2bows
-    #  @details This method converts document (a list of words) into the bag-of-words
-    #  format = list of (token_id, token_count) 2-tuples.
-    #  @param   corpus Set of documents to be processed.
-    #  @param   dictionary The dictionary with the documents keywords.
-    #################################################################################    
     def docs2bows(self,corpus, dictionary, pdocs):
         vectors = [dictionary.doc2bow(doc) for doc in pdocs]
         corpora.MmCorpus.serialize('vsm_docs.mm', vectors) # Save the corpus in the Matrix Market format
         return vectors
 
-    #################################################################################
-    ## @brief   ranking_function
-    #  @details This method initializes the class with the parameters introduced by the user
-    #           and execute the query. 
-    #  @param   corpus Set of documents to be processed.
-    #  @param   q Query, a document with the set of relevance words to the user.
-    #################################################################################   
     def ranking_function(self,corpus, q, query_id, mode):
         model, dictionary = self.create_documents_view(corpus, mode)
         loaded_corpus = corpora.MmCorpus('vsm_docs.mm')
@@ -98,42 +61,22 @@ class IRSystem(object):
         for doc, score in ranking:
             print ("[ Score = " + "%.3f" % round(score, 3) + "] " + corpus[doc])
       
-    #################################################################################
-    ## @brief   create_query_view
-    #  @details This method preprocess the query written in NL to build the query view
-    #  @param   query Query written in Natural Language
-    #################################################################################  
+      
     def create_query_view(self,query,dictionary):
         pq = self.preprocess_document(query)
         vq = dictionary.doc2bow(pq)
         return vq
 
-    #################################################################################
-    ## @brief   create_documents_view
-    #  @details This method preprocess the documents written in NL to build the documents view
-    #  @param   corpus Set of documents to be processed.
-    #################################################################################  
+
     def create_documents_view(self,corpus, ir_mode):
         dictionary,pdocs = self.create_dictionary(corpus)
-        bow = self.docs2bows(corpus, dictionary,pdocs)     
+        bow = self.docs2bows(corpus, dictionary, pdocs)     
         loaded_corpus = corpora.MmCorpus('vsm_docs.mm') # Recover the corpus
 
         if ir_mode == 1:
              model = [[(w[0], 1 + np.log2(w[1])) for w in v] for v in bow] # TF model
         elif ir_mode == 2:
              model = models.TfidfModel(loaded_corpus) # TF IDF model
-        elif ir_mode == 3:
-             model = models.LdaModel(loaded_corpus) # LDA model
-        elif ir_mode == 4:
-             model = models.LdaMulticore(loaded_corpus) # LDA Multicore model
-        elif ir_mode == 5:
-             model = models.LsiModel(loaded_corpus) # LSI model
-        elif ir_mode == 6:
-             model = models.RpModel(loaded_corpus) # RP model
-        elif ir_mode == 7:
-             model = models.LogEntropyModel(loaded_corpus) # LogEntropyModel model
-
-        # tf = corpora.MmCorpus('vsm_docs.mm') # Recover the corpus
         
         return model, dictionary
 
@@ -163,7 +106,7 @@ class IRBoolean(IRSystem):
 
     def __init__(self,corpus,queries):
         IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing Boolean information retrieval model--------------------------\n")
+        print("\n--------------------------Ejecutando el MRI Booleano--------------------------\n")
         self.ranking_query=dict()
 
         query_id=0
@@ -209,8 +152,8 @@ class IRBoolean(IRSystem):
         
     def document_matches(self,corpus, q):
         dictionary,pdocs = self.preprocess_corpus(corpus)
-        vq= self.preprocess_document(q) # preprocess query
-        dict_matches=dict((doc,0) for doc in corpus) # Create a dictionary with documents and initial value score 0
+        vq = self.preprocess_document(q) # preprocess query
+        dict_matches=dict((doc,0) for doc in dictionary) # Create a dictionary with documents and initial value score 0
         doc_number = 0 
         for doc in pdocs:
             intersection_list = list(set(doc) & set(vq)) 
@@ -222,15 +165,15 @@ class IRBoolean(IRSystem):
     def print_result(self,dict_matches):
         for keys,values in dict_matches.items():
             print("[ Score = " + str(values) + "] ")
-            print("Document = " + keys)
+            print("Document = " + str(keys))
           
-################################################ Model in Gensim library ################################################
+################################################ Modelos en la Libreria Gensim ################################################
 
 class IR_tf(IRSystem):
 
  def __init__(self,corpus,queries):
         IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing TF information retrieval model--------------------------\n")
+        print("\n--------------------------Ejecutando el MRI TF--------------------------\n")
         self.ranking_query=dict()
         self.query_launcher(corpus,queries,1)
 
@@ -239,56 +182,6 @@ class IR_tf_idf(IRSystem):
 
     def __init__(self,corpus,queries):
         IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing TF IDF information retrieval model--------------------------\n")
+        print("\n--------------------------Ejecutando el MRI TF IDF--------------------------\n")
         self.ranking_query=dict()
-        self.query_launcher(corpus,queries,2)
-       
-        
-class IR_Lda(IRSystem):
-
-    def __init__(self,corpus,queries):
-        IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing LDA information retrieval model--------------------------\n")
-        self.ranking_query=dict()
-        self.query_launcher(corpus,queries,3)
-
-        
-class IR_Lda_Multicore(IRSystem):
-
-    def __init__(self,corpus,queries):
-        IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing LDA Multicore information retrieval model--------------------------\n")
-        self.ranking_query=dict()
-        self.query_launcher(corpus,queries,4)
-
-class IR_Lsi(IRSystem):
-
-    def __init__(self,corpus,queries):
-        IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing LSI information retrieval model--------------------------\n")
-        self.ranking_query=dict()
-        self.query_launcher(corpus,queries,5)
-
-
-class IR_Rp(IRSystem):
-
-    def __init__(self,corpus,queries):
-        IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing Rp information retrieval model--------------------------\n")
-        self.ranking_query=dict()
-        self.query_launcher(corpus,queries,6)
-
-class IR_LogEntropyModel(IRSystem):
-
-    def __init__(self,corpus,queries):
-        IRSystem.__init__(self,corpus,queries)
-        print("\n--------------------------Executing LogEntropyModel information retrieval model--------------------------\n")
-        self.ranking_query=dict()
-        self.query_launcher(corpus,queries,7)    
-        
-        
-             
-
-
-      
-
+        self.query_launcher(corpus,queries,2)        
