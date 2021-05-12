@@ -2,7 +2,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from collections import Counter
-from num2words import num2words
+from scipy.sparse import lil_matrix, csr_matrix
 import json
 
 import numpy as np
@@ -27,8 +27,8 @@ class IrSystem:
         for doc in self.dataset.values():
             self.data[doc['id']] = {
                 'id' : doc['id'],
-                'title' : word_tokenize(str(self.preprocess(doc['title']))) if 'title' in doc.keys() else '',
-                'text' : word_tokenize(str(self.preprocess(doc['text']))) if 'text' in doc.keys() else ''
+                'title' : word_tokenize(str(self.preprocess(doc['title']))) if 'title' in doc.keys() else [],
+                'text' : word_tokenize(str(self.preprocess(doc['abstract']))) if 'abstract' in doc.keys() else []
                 }
 
         self.N = len(self.data)
@@ -72,19 +72,6 @@ class IrSystem:
             new_text = new_text + " " + stemmer.stem(w)
         return new_text
 
-    @staticmethod
-    def __convert_numbers(data):
-        tokens = word_tokenize(str(data))
-        new_text = ""
-        for w in tokens:
-            try:
-                w = num2words(int(w))
-            except:
-                a = 0
-            new_text = new_text + " " + w
-        new_text = np.char.replace(new_text, "-", " ")
-        return new_text
-
     def doc_freq(self, word):
         c = 0
         try:
@@ -98,10 +85,8 @@ class IrSystem:
         data = IrSystem.__remove_punctuation(data) #remove comma seperately
         data = IrSystem.__remove_apostrophe(data)
         data = IrSystem.__remove_stop_words(data)
-        data = IrSystem.__convert_numbers(data)
         data = IrSystem.__stemming(data)
         data = IrSystem.__remove_punctuation(data)
-        data = IrSystem.__convert_numbers(data)
         data = IrSystem.__stemming(data) #needed again as we need to stem the words
         data = IrSystem.__remove_punctuation(data) #needed again as num2word is giving few hypens and commas fourty-one
         data = IrSystem.__remove_stop_words(data) #needed again as num2word is giving stop words 101 - one hundred and one
@@ -131,7 +116,7 @@ class IrSystem:
 
     def __tf_idf(self):
         
-        self.tf_idf = np.zeros((self.N, self.total_vocab_size))
+        self.tf_idf = lil_matrix((self.N + 1, self.total_vocab_size))
 
         tf_idf = {}
         tf_idf_title = {}
@@ -166,16 +151,15 @@ class IrSystem:
 
         
         for i in tf_idf:
-            try:
-                ind = self.total_vocab.index(i[1])
-                self.tf_idf[i[0]][ind] = tf_idf[i]
-            except:
-                pass
+            ind = self.total_vocab.index(i[1])
+            self.tf_idf[i[0], ind] = tf_idf[i]
+        
+        self.tf_idf = csr_matrix(self.tf_idf)
 
             
     def __gen_query_vector(self, tokens):
 
-        Q = np.zeros(self.total_vocab_size)
+        Q = lil_matrix((1, self.total_vocab_size))
         
         counter = Counter(tokens)
         words_count = len(tokens)
@@ -185,13 +169,14 @@ class IrSystem:
             tf = counter[token]/words_count
             df = self.doc_freq(token)
             idf = math.log((self.N+1)/(df+1))
-
+            
             try:
                 ind = self.total_vocab.index(token)
-                Q[ind] = tf*idf
+                Q[0, ind] = tf*idf
             except:
                 pass
-        return Q
+           
+        return csr_matrix(Q)
 
     def search(self, k, preview, query):
         print("\n---------- Ejecutando búsqueda -----------\n")
@@ -218,11 +203,21 @@ class IrSystem:
 
     @staticmethod
     def __cosine_sim(a, b):
-        return 0 if not a.max() or not b.max() else np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
+        return 0 if not a.max() or not b.max() else a.dot(b.transpose())/(IrSystem.__sparse_row_norm(a)*IrSystem.__sparse_row_norm(b))
+
+    @staticmethod
+    def __sparse_row_norm(A):
+        out = np.zeros(A.shape[0])
+        # ufunc.reduceat only works properly for strictly increasing points
+        # as a workaround we filter out empty rows
+        nz, = np.diff(A.indptr).nonzero()
+        out[nz] = np.sqrt(np.add.reduceat(np.square(A.data),A.indptr[nz]))
+        return out
+
 
     def __print_search(self, out, preview):
         for doc in out:
-            print(f"{doc} - { self.dataset[str(doc)]['title'] if self.dataset[str(doc)]['title'] != '' else 'Not Title'}\nText: {self.dataset[str(doc)]['text'][:preview]}")
+            print(f"{doc} - { self.dataset[str(doc)]['title'] if self.dataset[str(doc)]['title'] != '' else 'Not Title'}\nText: {self.dataset[str(doc)]['abstract'][:preview]}")
             print()
 
 
