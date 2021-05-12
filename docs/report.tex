@@ -79,36 +79,100 @@ the abstract section}
 
 \section{Diseño del Sistema}
 
-Un sistema de recuperación de información (IRS) se compone por el cuadruplo $<D,\ Q,\ F,\ R(q_j, d_j)>$, donde $D$ es un conjunto de representaciones de los documentos, $Q$ es un conjunto compuesto por representaciones lógicas de los pedidos que el usuario realiza al sistema, $F$ es un framework para modelar las representaciones y $R$ es una función de orden donde a cada consulta $q_j$ y un documento $d_j$ le asigna un valor acorde a la relevancia del documento para esa consulta. El proceso de interacción de un sistema con un usuario sigue el siguiente comportamiento: Primeramente el usuario realiza una consulta (un elemento de $Q$), esta pasa al motor de búsqueda, este es la componente más importante del sistema ya que en este se realizan las representaciones de los documentos (corpus) que contiene el sistema a un formato el cual pueda ser fácilmente empleado por el IRS elegido, también contiene el procesador de consulta el cual realiza una transformación de la consulta, primeramente para interpretar los operadores que pudo emplear el usuario y segundo para realizar la representación interna de la consulta, por ultimo el sistema dará como resultado una lista ordenada por relevancia de los documentos del corpus. Analizaremos a continuación el procesador de consultas, como se compone el motor de búsqueda y finalmente la salida del sistema.
+Un sistema de recuperación de información (IRS) se compone por el cuadruplo $<D,\ Q,\ F,\ R(q_j, d_j)>$, donde $D$ es un conjunto de representaciones de los documentos, $Q$ es un conjunto compuesto por representaciones lógicas de los pedidos que el usuario realiza al sistema, $F$ es un framework para modelar las representaciones y $R$ es una función de orden donde a cada consulta $q_j$ y un documento $d_j$ le asigna un valor acorde a la relevancia del documento para esa consulta. El proceso de interacción de un sistema con un usuario sigue el siguiente comportamiento: Primeramente el usuario realiza una consulta (un elemento de $Q$), esta pasa al motor de búsqueda, este es la componente más importante del sistema ya que en este se realizan las representaciones de los documentos\footnote{En nuestro caso es un IRS vectorial por tanto la representación interna se realiza mediante vectores cuyas componentes son pesos asociados a la entidad resultante del preprocesamiento}, además de representar la consulta en formato interno, el sistema dará como resultado una lista ordenada por relevancia de los documentos del corpus. Analizaremos a continuación el procesador de consultas, como se compone el motor de búsqueda y finalmente la salida del sistema. En nuestro caso el sistema va enfocado en la búsqueda de documentos, un documento tiene varias características, dos de las más comunes y útiles a la hora de realizar búsquedas es el título y el cuerpo del documento.
 
-\subsection{Procesamiento de la Consulta}
-
-La consulta es un conjunto de representaciones lógicas de las necesidades del usuario. El procesamiento de la consulta realizada por el usuario permitirá no solo transformarla a la representación interna que emplea el motor de búsqueda también permite que podamos definir consultas más complejas y por lo tanto que satisfagan más al usuario. Podemos pensar en una consulta básica como una entidad, por ejemplo si hablamos en temas médicos \textit{atrofia muscular} sería una entidad, si agregamos operaciones lógicas como \verb*|or| y \verb*|and| entonces contamos con más recursos a la hora de definir la consulta. Existen además otras operaciones como el uso de comillas para la expresión de forma exacta, comandos para búsqueda avanzada entre otras. En nuestro sistema hemos decidido solamente emplear las operaciones \verb*|or| y \verb*|and| debido a que son las más relevantes en cuanto a la recuperación de información de textos que es el principal objetivo del sistema, no obstante es posible agregar nuevas operaciones sin necesidad de realizar grandes modificaciones debido que para un conjunto de entidades y operaciones entre ellas, el procesador de consultas se encarga en crear un texto plano, sin operadores, el cual puede ser interpretado por el motor búsqueda.
-
-\subsection{Motor de Búsqueda}
+\subsection*{Motor de Búsqueda}
 
 El motor de búsqueda contiene el modelo de recuperación de información, además en este se realiza el preprocesado de los documentos y su representación interna, también cada consulta se almacena en su forma interna para ser empleada en otras tareas. Además contiene la función de ranking la cual clasifica la relevancia de los documentos del corpus acorde a la consulta y el IRS.
 
-\subsubsection{Representación de Documentos:} 
+\subsubsection{Preprocesamiento:} 
 
 Para representar los documentos primeramente es necesario realizar un preprocesado, en nuestro sistema procedemos de forma simple empleando recursos del procesamiento de lenguaje natural. Las siguientes transformaciones son realizadas para cada documento del corpus:
 
 \begin{enumerate}
-	\item \textbf{Tokenizar el documento:} Primeramente es necesario crear la representación básica de un documento, la división en tokens, estos son unidades básicas, de esta forma podemos realizar procesamiento más avanzado sobre el texto, ya desde esta parte del procesamiento podemos retirar signos de puntuación y otros símbolos que carentes de información.
-	\item \textbf{Eliminación de \textit{stopwords}:} Las \textit{stopwords} como sabemos son palabras vacias de significado, las cuales pueden servir de nexo entre entidades o funcionan como modificadores. Si incluimos estas palabras en la representación del documento se afecta la efectividad del modelo debido a la alta frecuencia que poseen estas palabras en los textos.
+	\item \textbf{Tokenizar el documento:} Primeramente es necesario crear la representación básica de un documento, la división en tokens, estos son unidades básicas, de esta forma podemos realizar procesamiento más avanzado sobre el texto, ya desde esta parte del procesamiento podemos llevar a minúscula todas las palabras, eliminar símbolos y signos de puntuación. También es posible convertir los números a texto, de esta forma no tendremos problemas a la hora de construir los diversos modelos. \\
+	\item \textbf{Eliminación de \textit{stopwords}:} Las \textit{stopwords} como sabemos son palabras vacias de significado, las cuales pueden servir de nexo entre entidades o funcionan como modificadores. Si incluimos estas palabras en la representación del documento se afecta la efectividad del modelo debido a la alta frecuencia que poseen estas palabras en los textos. \\
 	\item \textbf{Stemming:} Este método busca relacionar palabras con igual significado
 	pero que difieren en cuanto a la escritura, por la aplicación de prefijos o
-	sufijos, se encuentran en plural o singular entre otras diferencias, en este caso no usaremos lematización que es común que se emplee luego del stemming, con remover las partes correspondientes es suficiente para obtener buenos resultados. 
+	sufijos, se encuentran en plural o singular entre otras diferencias, en este caso no usaremos lematización que es común que se emplee luego del stemming, con remover las partes correspondientes es suficiente para obtener buenos resultados.
 \end{enumerate} 
 
-Estas técnicas son las empleadas por el sistema para obtener un conjunto de textos formados por entidades con un significado y peso correcto para empezar a construir el modelo, pero antes de definir el modelo es necesario definir como serán estas entidades y que representación interna tendrán. Para las entidades se decidió emplear la más básica, palabras, cada palabra constituye una entidad, sin importar de que documento del corpus sea. Una vez que tenemos el tipo de entidad pasamos a representar el corpus, el corpus se compone de todos los documentos por lo tanto emplearemos primeramente un mapping en donde cada palabra del corpus recibe un identificador, de esta forma tendremos cada elemento identificado de forma única, luego pasamos a formar un \textit{Bag of Words}.
+Estas técnicas son las empleadas por el sistema para obtener un conjunto de textos formados por entidades con un significado y peso correcto para empezar a construir el modelo, pero antes de definir el modelo es necesario definir como serán estas entidades y que representación interna tendrán. Se eligió emplear los tokens como entidad del sistema, de esta forma se construye una colección con el siguiente formato:  \\
 
-\paragraph{Bag of Words:} Consiste en obtener todas las palabras diferentes que aparecen
-en el corpus. Obteniendo un conjunto de palabras pero perdiendo su orden secuencial. Al realizar esta operación la estructura del corpus se pierde siendo necesario guardar dicha estructura para ser empleada más adelante como parte de la salida del sistema. \\
+\noindent
+{\it Representación del titulo y el cuerpo del documento preprocesado}
+\begin{verbatim}
+	    corpus: {
+                   [id: n,
+                   'title': Tokenize(doc_title),
+                   'body': Tokenize(doc_body),
+                   ],
+                   ...
+            }
+\end{verbatim}
+%
+\noindent
 
-El proceso de Bag of Words permite la unificar 
+\subsubsection{Vectorización:} De esta forma contamos con el identificador para cada documento del corpus, su titulo y cuerpo preprocesado. Pero todavia tenemos tokens los cuales no pueden ser la entrada para el modelo, es necesario realizar una vectorización
+empleando TF-IDF. Para calcular los valores de frecuencia emplearemos el titulo y el cuerpo del documento juntos, sin realizar distinción, o sea el titulo podría ser una oración más del texto.
 
-\subsection{Salida del Sistema}
+\paragraph*{TF-IDF:} Es una técnica para cuantificar una palabra en documentos, generalmente calculamos un peso para cada palabra que significa la importancia de la palabra en el documento y corpus. Este método es una técnica ampliamente utilizada en recuperación de información y minería de textos. Esta se representa por $w(t_i, d_j)$ donde $t_i$ es un término del documento $d_j$, en nuestro caso un los $t_j$ son tokens. \\
+
+El TF-IDF se compone de dos conceptos fundamentales que se apoyan en el procesamiento de los documentos, el TF (Frecuencia de Termino) y el IDF (Frecuencia Inversa de Documento).
+
+\paragraph*{TF:} Mide la frecuencia de una palabra en un documento. Esto depende en gran medida de la longitud del documento y de la generalidad de la palabra, por ejemplo, una palabra muy común como "casa" puede aparecer varias veces en un documento. Como los documentos pueden tener una longitud variable entonces contar simplemente las palabras podría dar prioridad a documentos de mayor tamaño, por eso es que se divide la cantidad de ocurrencias por el número total de palabra del documento $N(d_j)$. TF es individual para cada documento y palabra, por lo tanto, podemos formular TF de la siguiente manera:
+
+\begin{equation}
+	f_s(t_i, d_j) = \frac{C(t_i, d_j)}{N(d_j)}
+\end{equation}
+
+Donde $C(t_i, d_j)$ representará la cantidad de ocurrencias del termino en el documento. Recordemos que estamos vectorizando los documentos por tanto es necesario introducir el concepto de \textbf{vocabulario}, este es un conjunto formado por todas las palabras del corpus, o sea todas las palabras que hay en cada documento, de esta forma garantizamos que los vectores para cada documento tengan siempre las misma dimensión, donde cada componente tendrá el valor de frecuencia asociado para esa palabra, este estará en el intervalo $[0,1]$. Aunque empleando esta frecuencia es posible obtener resultados, todavía podemos mejorar los valores para el vector. Antes de definir IDF es necesario definir Frecuencia de Documento, ya que su inversa es IDF.
+
+\paragraph*{DF:} Esto mide la importancia del documento en todo el conjunto de corpus, esto es muy similar a TF. La única diferencia es que TF es el contador de frecuencia para un término t en el documento d, donde DF es el recuento de apariciones del término $t_i$ en el conjunto de documentos $D$. En otras palabras, DF es el número de documentos en los que está presente la palabra. Consideramos una ocurrencia si el término consta en el documento al menos una vez, no necesitamos saber el número de veces que el término está presente. 
+
+Como en el caso de TF también normalizamos dividiendo por el número total de documentos. Nuestro principal objetivo es conocer la informatividad de un término, para eso invertimos DF.
+
+\paragraph*{IDF:} Es la inversa de la frecuencia del documento que mide la informatividad del término t. Cuando calculemos el IDF, será muy bajo para las palabras más frecuentes. Como es posible que el DF sea cero entonces es necesario realizar algunas modificaciones para no dividir entre 0, además si el corpus es grande podemos entonces obtener un valor que no sea de utilidad por lo tanto emplearemos para calcular el IDF.
+
+\begin{equation}
+	\overline{d}_s(t_i) = \log{\frac{|D|}{d_s(t_i) + 1}}
+\end{equation}
+
+Ahora combinemos ambas frecuencias, de esta forma tendremos una relación entre términos de mucha ocurrencia con respecto a aquellos que de baja frecuencia en los documentos.
+
+\begin{equation}
+	w(t_i, d_j) = f_s(t_i, d_j) \log{\frac{|D|}{d_s(t_i) + 1}}
+\end{equation}
+
+Hasta el momento se ha expuesto el concepto de TF-IDF para documentos pero ignorando si tienen titulo o no. Los textos que conforman el corpus del motor de búsqueda tienen diversas características y hemos elegido el titulo y el cuerpo para representar, por lo tanto debemos determinar cual de estos es más importante, o sea para dar un valor de relevancia a un documento que tiene mayor peso el título o el cuerpo, para ello definamos el parámetro $\alpha$ el cual define cuanto peso le damos al título a la hora de calcular la relevancia, de esta forma tendríamos que determinar los valores de TF-IDF tanto para el título como para el cuerpo, relacionando estos valores con $\alpha$ para obtener la frecuencia final para el término en el documento. Como los valores de TF-IDF para un término no toman en cuenta si este se encontraba en el titulo del documento o en el cuerpo, como se expreso anteriormente entonces definamos $w_t$ como el valor de TF-IDF para un término en el título y $w_b$ para cuando se encuentra en el cuerpo del documento. Finalmente obtenemos la expresión.
+
+\begin{equation}
+	w(t_i, d_j) = w_t(t_i, d_j) · \alpha + w_b(t_i, d_j) · (1 - \alpha), \qquad \alpha \in [0, 1]
+\end{equation}
+
+Podemos notar como el valor de $\alpha$ es un coeficiente asociado a las frecuencias de cada parte del documento, además un aspecto importante a tener en cuenta es lo siguiente: Si el termino $t_i$ aparece tanto en el título como en el cuerpo del documento entonces $w_t(t_i, d_j) = w_b(t_i, d_j)$, debido a que no se tomó en cuenta la posición a la hora de calcular los valores de frecuencia, por lo tanto el valor final sería: 
+
+\begin{equation}
+	w(t_i, d_j) = w_b(t_i, d_j)
+\end{equation}
+
+Ya tenemos el valor de frecuencia además de que empleamos el parámetro  $\alpha$ para definir la importancia que tiene el título o no al momento de determinar la relevancia, pasemos entonces a vectorizar los documentos. Para vectorizar el documento emplearemos un Bag of Words.
+
+\paragraph*{Bag of Words:} Este consiste en tomar todas las palabras del corpus que constituyen el vocabulario ($V$) y formar una colección donde cada palabra tiene asociado un índice, de esta forma obtenemos un vector $\overrightarrow{d_j}$ de dimension $1 \times |V|$ asociado al documento $d_j$, donde en cada componente se encuentra el valor de TF-IDF asociado a la palabra.
+
+De esta forma obtenemos para cada documento del corpus el vector $\overrightarrow{d_j}$, ahora pasemos a determinar como se procesa la consulta para obtener su vector correspondiente y dependiendo de este que función de ranking se empleó.
+
+\subsection*{Consultas}
+
+Como sabemos en el sistema existe un conjunto $Q$ que contiene las consultas realizadas por el usuario, una consulta $q$ no es más que una oración u entidad empleada para realizar la búsqueda. Para poder determinar cuales documentos son relevantes para esa consulta es necesario establecer un orden de los mismo acorde a la importancia por lo tanto debemos convertir la consulta a un vector empleando el mismo proceso que vimos en el motor de búsqueda.
+
+Se usa el mismo vocabulario $V$ empleado para la representación del corpus, y se procese a crear el vector $\overrightarrow{q_i}$, en caso que existan palabras en $q_i$ que no se encuentran en el vocabulario serán ignoradas. 
+
+El valor que tomarán las componentes no tiene necesariamente que ser calculo igual a como se realiza en el motor de búsqueda para representar el corpus, puede depender de la función de ranking o si usamos un modelo un poco más complejo.
+
+\subsection*{Función de Ranking} 
+
+\subsection*{Salida del Sistema}
 
 \section{Sobre la implementación} % aqui link a github
 
