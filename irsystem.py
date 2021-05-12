@@ -1,4 +1,3 @@
-from operator import concat, mod
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
@@ -6,10 +5,7 @@ from collections import Counter
 from num2words import num2words
 import json
 
-import os
-
 import numpy as np
-import re
 import math
 
 class IrSystem:
@@ -19,8 +15,7 @@ class IrSystem:
         self.alpha = alpha  
         self.searched = {}
         
-        dataset = 'asd'
-        if dataset.lower() == 'cran':  
+        if dataset == '1':  
             with open('datasets\CRAN.ALL.json') as data:    
                 self.dataset = json.load(data)
         else:
@@ -32,8 +27,8 @@ class IrSystem:
         for doc in self.dataset.values():
             self.data[doc['id']] = {
                 'id' : doc['id'],
-                'title' : word_tokenize(str(self.preprocess(doc['title']))),
-                'text' : word_tokenize(str(self.preprocess(doc['abstract'])))
+                'title' : word_tokenize(str(self.preprocess(doc['title']))) if 'title' in doc.keys() else '',
+                'text' : word_tokenize(str(self.preprocess(doc['text']))) if 'text' in doc.keys() else ''
                 }
 
         self.N = len(self.data)
@@ -227,25 +222,30 @@ class IrSystem:
 
     def __print_search(self, out, preview):
         for doc in out:
-            print(f"{doc} - { self.dataset[str(doc)]['title'] }\n\t{self.dataset[str(doc)]['abstract'][:preview]}")
+            print(f"{doc} - { self.dataset[str(doc)]['title'] }\n\t{self.dataset[str(doc)]['text'][:preview]}")
             print()
 
 
 if __name__ == '__main__':
-    irsystem = IrSystem(0.3)
+    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - CISI \n-> ')
+    irsystem = IrSystem(0.3, dataset)
+    
     query = input("Escribe una consulta: ")
     irsystem.search(5, 500, query)
     
     while True:
+        print('\nOpciones:')
         mode = input(f"1 - Hacer una nueva consulta \n2 - Aplicar Retroalimentación de Rocchio a una consulta \n3 - Analizar Rendimiento de una consulta \nEnter - Para terminar\n-> ")
         if mode == '1':
             query = input("\nEscribe una consulta: ")
             irsystem.search(5, 500, query)
         elif mode == '2':
+            print('\nOpciones:')
             ask = [f'{i} - {query}\n' for i, query in enumerate(irsystem.searched.keys())]
             query = input("".join(ask) + '-> ')
             pass
         elif mode == '3':
+            print('\nOpciones:')
             ask = [f'{i} - {query}\n' for i, query in enumerate(irsystem.searched.keys())]
             query = input("".join(ask) + '-> ')
             pass
