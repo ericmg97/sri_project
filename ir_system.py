@@ -181,13 +181,11 @@ class IrSystem:
     def search(self, k, preview, query):
         print("\n---------- Ejecutando búsqueda -----------\n")
         
-        if query in self.searched.keys():
-            self.__print_search(self.searched[query], preview)
-        
-            return self.searched
-        
+        preprocessed_query = self.preprocess(query)
+
+        if preprocessed_query in self.searched.keys():
+            self.__print_search(self.searched[preprocessed_query][1], preview)
         else:
-            preprocessed_query = self.preprocess(query)
             tokens = word_tokenize(str(preprocessed_query))
         
             d_cosines = []
@@ -195,11 +193,11 @@ class IrSystem:
             query_vector = self.__gen_query_vector(tokens)
             
             for d in self.tf_idf:
-                d_cosines.append(IrSystem.__cosine_sim(query_vector, d))
+                d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
                 
-            self.searched[query] = np.array(d_cosines).argsort()[-k:][::-1]
+            self.searched[preprocessed_query] = (query, np.array(d_cosines).argsort()[-k:][::-1])
 
-            self.__print_search(self.searched[query], preview)
+            self.__print_search(self.searched[preprocessed_query][1], preview)
 
     @staticmethod
     def __cosine_sim(a, b):
