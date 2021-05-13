@@ -1,234 +1,234 @@
 {
- "001": {
-  "id": "001",
+ "1": {
+  "id": "1",
   "text": "what similarity laws must be obeyed when constructing aeroelastic models of heated high speed aircraft ."
  },
- "002": {
-  "id": "002",
+ "2": {
+  "id": "2",
   "text": "what are the structural and aeroelastic problems associated with flight of high speed aircraft ."
  },
- "004": {
-  "id": "004",
+ "4": {
+  "id": "4",
   "text": "what problems of heat conduction in composite slabs have been solved so far ."
  },
- "008": {
-  "id": "008",
+ "8": {
+  "id": "8",
   "text": "can a criterion be developed to show empirically the validity of flow solutions for chemically reacting gas mixtures based on the simplifying assumption of instantaneous local chemical equilibrium ."
  },
- "009": {
-  "id": "009",
+ "9": {
+  "id": "9",
   "text": "what chemical kinetic system is applicable to hypersonic aerodynamic problems ."
  },
- "010": {
-  "id": "010",
+ "10": {
+  "id": "10",
   "text": "what theoretical and experimental guides do we have as to turbulent couette flow behaviour ."
  },
- "012": {
-  "id": "012",
+ "12": {
+  "id": "12",
   "text": "is it possible to relate the available pressure distributions for an ogive forebody at zero angle of attack to the lower surface pressures of an equivalent ogive forebody at angle of attack ."
  },
- "013": {
-  "id": "013",
+ "13": {
+  "id": "13",
   "text": "what methods -dash exact or approximate -dash are presently available for predicting body pressures at angle of attack."
  },
- "015": {
-  "id": "015",
+ "15": {
+  "id": "15",
   "text": "papers on internal /slip flow/ heat transfer studies ."
  },
- "018": {
-  "id": "018",
+ "18": {
+  "id": "18",
   "text": "are real-gas transport properties for air available over a wide range of enthalpies and densities ."
  },
- "022": {
-  "id": "022",
+ "22": {
+  "id": "22",
   "text": "is it possible to find an analytical,  similar solution of the strong blast wave problem in the newtonian approximation ."
  },
- "023": {
-  "id": "023",
+ "23": {
+  "id": "23",
   "text": "how can the aerodynamic performance of channel flow ground effect machines be calculated ."
  },
- "026": {
-  "id": "026",
+ "26": {
+  "id": "26",
   "text": "what is the basic mechanism of the transonic aileron buzz ."
  },
- "027": {
-  "id": "027",
+ "27": {
+  "id": "27",
   "text": "papers on shock-sound wave interaction ."
  },
- "029": {
-  "id": "029",
+ "29": {
+  "id": "29",
   "text": "material properties of photoelastic materials ."
  },
- "031": {
-  "id": "031",
+ "31": {
+  "id": "31",
   "text": "can the transverse potential flow about a body of revolution be calculated efficiently by an electronic computer ."
  },
- "032": {
-  "id": "032",
+ "32": {
+  "id": "32",
   "text": "can the three-dimensional problem of a transverse potential flow about a body of revolution be reduced to a two-dimensional problem ."
  },
- "033": {
-  "id": "033",
+ "33": {
+  "id": "33",
   "text": "are experimental pressure distributions on bodies of revolution at angle of attack available ."
  },
- "034": {
-  "id": "034",
+ "34": {
+  "id": "34",
   "text": "does there exist a good basic treatment of the dynamics of re-entry combining consideration of realistic effects with relative simplicity of results ."
  },
- "035": {
-  "id": "035",
+ "35": {
+  "id": "35",
   "text": "has anyone formally determined the influence of joule heating,  produced by the induced current,  in magnetohydrodynamic free convection flows under general conditions ."
  },
- "039": {
-  "id": "039",
+ "39": {
+  "id": "39",
   "text": "why does the compressibility transformation fail to correlate the high speed data for helium and air ."
  },
- "040": {
-  "id": "040",
+ "40": {
+  "id": "40",
   "text": "did anyone else discover that the turbulent skin friction is not over sensitive to the nature of the variation of the viscosity with temperature ."
  },
- "041": {
-  "id": "041",
+ "41": {
+  "id": "41",
   "text": "what progress has been made in research on unsteady aerodynamics ."
  },
- "049": {
-  "id": "049",
+ "49": {
+  "id": "49",
   "text": "what are the factors which influence the time required to invert large structural matrices ."
  },
- "050": {
-  "id": "050",
+ "50": {
+  "id": "50",
   "text": "does a practical flow follow the theoretical concepts for the interaction between adjacent blade rows of a supersonic cascade ."
  },
- "051": {
-  "id": "051",
+ "51": {
+  "id": "51",
   "text": "what is a single approximate formula for the displacement thickness of a laminar boundary layer in compressible flow on a flat plate ."
  },
- "052": {
-  "id": "052",
+ "52": {
+  "id": "52",
   "text": "how is the design of ring or part ring wings by linear theory affected by thickness ."
  },
- "053": {
-  "id": "053",
+ "53": {
+  "id": "53",
   "text": "what application has the linear theory design of curved wings ."
  },
- "054": {
-  "id": "054",
+ "54": {
+  "id": "54",
   "text": "what is the effect of cross sectional shape on the flow over simple delta wings with sharp leading edges ."
  },
- "055": {
-  "id": "055",
+ "55": {
+  "id": "55",
   "text": "papers on flow visualization on slender conical wings ."
  },
- "056": {
-  "id": "056",
+ "56": {
+  "id": "56",
   "text": "what size of end plate can be safely used to simulate two-dimensional flow conditions over a bluff cylindrical body of finite aspect ratio ."
  },
- "057": {
-  "id": "057",
+ "57": {
+  "id": "57",
   "text": "to find an approximate correction for thickness in slender thin-wing theory ."
  },
- "058": {
-  "id": "058",
+ "58": {
+  "id": "58",
   "text": "how do interference-free longitudinal stability measurements (made using free-flight models) compare with similar measurements made in a low-blockage wind tunnel ."
  },
- "059": {
-  "id": "059",
+ "59": {
+  "id": "59",
   "text": "have wind tunnel interference effects been investigated on a systematic basis ."
  },
- "061": {
-  "id": "061",
+ "61": {
+  "id": "61",
   "text": "are there any papers dealing with acoustic wave propagation in reacting gases ."
  },
- "062": {
-  "id": "062",
+ "62": {
+  "id": "62",
   "text": "has anyone investigated relaxation effects on gaseous heat transfer to a suddenly heated wall ."
  },
- "066": {
-  "id": "066",
+ "66": {
+  "id": "66",
   "text": "are there any theoretical methods for predicting base pressure ."
  },
- "067": {
-  "id": "067",
+ "67": {
+  "id": "67",
   "text": "does transition in the hypersonic wake depend on body geometry and size"
  },
- "068": {
-  "id": "068",
+ "68": {
+  "id": "68",
   "text": "how can one detect transition phenomena in boundary layers ."
  },
- "069": {
-  "id": "069",
+ "69": {
+  "id": "69",
   "text": "how can one detect transition phenomena in hypersonic wakes ."
  },
- "071": {
-  "id": "071",
+ "71": {
+  "id": "71",
   "text": "has anyone investigated and developed a simple model for the vortex wake behind a cruciform wing ."
  },
- "072": {
-  "id": "072",
+ "72": {
+  "id": "72",
   "text": "what is a criterion that the transonic flow around an airfoil with a round leading edge be validly analyzed by the linearized transonic flow theory ."
  },
- "074": {
-  "id": "074",
+ "74": {
+  "id": "74",
   "text": "can the transonic flow around an arbitrary smooth thin airfoil be analysed in a simple approximate way ."
  },
- "079": {
-  "id": "079",
+ "79": {
+  "id": "79",
   "text": "what are the details of the rigorous kinetic theory of gases . (chapman-enskog theory) ."
  },
- "080": {
-  "id": "080",
+ "80": {
+  "id": "80",
   "text": "has anyone investigated the effect of surface mass transfer on hypersonic viscous interactions ."
  },
- "081": {
-  "id": "081",
+ "81": {
+  "id": "81",
   "text": "what is the combined effect of surface heat and mass transfer on hypersonic flow ."
  },
- "082": {
-  "id": "082",
+ "82": {
+  "id": "82",
   "text": "what are the existing solutions for hypersonic viscous interactions over an insulated flat plate ."
  },
- "083": {
-  "id": "083",
+ "83": {
+  "id": "83",
   "text": "what controls leading-edge attachment at transonic speeds ."
  },
- "084": {
-  "id": "084",
+ "84": {
+  "id": "84",
   "text": "can the three-point boundary-value problem for the blasius equation be integrated numerically,  using suitable transformations,  without iteration on the boundary conditions ."
  },
- "085": {
-  "id": "085",
+ "85": {
+  "id": "85",
   "text": "what are the effects of small amounts of gas rarefaction on the characteristics of the boundary layers on slender bodies of revolution ."
  },
- "086": {
-  "id": "086",
+ "86": {
+  "id": "86",
   "text": "what is the available information pertaining to boundary layers on very slender bodies of revolution in continuum flow (the ?transverse curvature  effect) ."
  },
- "087": {
-  "id": "087",
+ "87": {
+  "id": "87",
   "text": "what is the available information pertaining to the effect of slight rarefaction on boundary layer flows (the ?slip? effect) ."
  },
- "093": {
-  "id": "093",
+ "93": {
+  "id": "93",
   "text": "what investigations have been made of the flow field about a body moving through a rarefied,  partially ionized gas in the presence of a magnetic field ."
  },
- "094": {
-  "id": "094",
+ "94": {
+  "id": "94",
   "text": "how is the heat transfer downstream of the mass transfer region effected by mass transfer at the nose of a blunted cone ."
  },
- "095": {
-  "id": "095",
+ "95": {
+  "id": "95",
   "text": "to what extent can the available information for incompressible boundary layers be applied to problems involving compressible boundary layers ."
  },
- "097": {
-  "id": "097",
+ "97": {
+  "id": "97",
   "text": "to what extent can readily available steady-state aerodynamic data be utilized to predict lifting-surface flutter characteristics ."
  },
- "098": {
-  "id": "098",
+ "98": {
+  "id": "98",
   "text": "what are the significant steady and non-steady flow characteristics which affect the flutter mechanism ."
  },
- "099": {
-  "id": "099",
+ "99": {
+  "id": "99",
   "text": "is it possible to determine rates of forced convective heat transfer from heated cylinders of non-circular cross-section,  (the fluid flow being along the generators) ."
  },
  "100": {

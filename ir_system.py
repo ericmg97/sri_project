@@ -3,8 +3,8 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from collections import Counter
 import matplotlib.pyplot as plot
-from numpy.core.defchararray import mod
-from scipy.sparse import lil_matrix, csr_matrix
+from numpy.lib.function_base import average
+from scipy.sparse import data, lil_matrix, csr_matrix
 import json
 
 import numpy as np
@@ -26,7 +26,7 @@ class IrSystem:
 
             with open('datasets\Cranfield\CRAN.REL.json') as data:    
                 self.rel = json.load(data)
-        else:
+        elif dataset == '2':
             with open('datasets\Med\MED.ALL.json') as data:    
                 self.dataset = json.load(data)  
 
@@ -35,8 +35,11 @@ class IrSystem:
             
             with open('datasets\Med\MED.REL.json') as data:    
                 self.rel = json.load(data)    
+        else:
+            return
 
         self.data = {}
+        self.relevant_docs = int(average([len(queries.values()) for queries in self.rel.values()]))
 
         for doc in self.dataset.values():
             self.data[doc['id']] = {
@@ -50,7 +53,7 @@ class IrSystem:
         self.__tf_idf()
 
         for query in self.querys.values():
-            self.search(query['text'], query['id'], show_output = False)
+            self.search(query['text'], query_id = query['id'])
             
     @staticmethod
     def __convert_lower_case(data):
@@ -174,7 +177,7 @@ class IrSystem:
         self.tf_idf = csr_matrix(self.tf_idf)
 
             
-    def __gen_query_vector(self, tokens):
+    def __gen_query_vector(self, tokens, alpha):
 
         Q = lil_matrix((1, self.total_vocab_size))
         
@@ -183,9 +186,12 @@ class IrSystem:
         
         for token in np.unique(tokens):
             
-            tf = counter[token]/words_count
+            tf = alpha + (1 - alpha) * (counter[token] / words_count)
             df = self.__doc_freq(token)
-            idf = math.log((self.N+1)/(df+1))
+            if df:
+                idf = math.log((self.N)/(df))
+            else:
+                idf = 0
             
             try:
                 ind = self.total_vocab.index(token)
@@ -212,33 +218,31 @@ class IrSystem:
             print(f"{doc[0]} - { self.dataset[str(doc[0])]['title'] if self.dataset[str(doc[0])]['title'] != '' else 'Not Title'}\nText: {self.dataset[str(doc[0])]['abstract'][:preview]}")
             print()
 
-    def search(self, query, query_id = False, k = -1, show_output = True, preview = 500):
-        if not query_id:
-            query_id = str(len(self.searched))
-        elif query_id in self.searched.keys():
+    def search(self, query, alpha = 0.4, query_id = False, k = -1, preview = 500):
+        if query_id and query_id in self.searched.keys():
             self.__print_search(self.searched[query_id][1], preview)
             return
         
         preprocessed_query = self.__preprocess(query)
             
-        if (show_output):
+        if (not query_id):
             print("\n---------- Ejecutando Búsqueda -----------\n")
         
         tokens = word_tokenize(str(preprocessed_query))
     
         d_cosines = []
         
-        query_vector = self.__gen_query_vector(tokens)
+        query_vector = self.__gen_query_vector(tokens, float(alpha))
         
         for d in self.tf_idf:
             d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
 
-        out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[-k:][::-1] if d_cosines[id].max() > 0.0]
+        out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[-k:][::-1] if d_cosines[id] and d_cosines[id].max() > 0.0]
 
-        self.searched[query_id] = (query, out)
-
-        if (show_output):
-            self.__print_search(self.searched[query_id][1], preview)
+        if query_id:
+            self.searched[query_id] = (query, out)
+        else:
+            self.__print_search(out[:self.relevant_docs], preview)
 
     def evaluate_query(self,query_id, show_output):
         if str(query_id) not in self.searched.keys():
@@ -248,13 +252,13 @@ class IrSystem:
         if (show_output):
             print("\nConsulta: " + self.searched[str(query_id)][0]) 
 
-        self.__evaluate(self.searched[query_id][1],self.rel[str(query_id)],query_id)
+        self.__evaluate(self.searched[query_id][1],self.rel[str(query_id)])
 
-    def relevant_doc_retrieved(self, ranking,relevants_docs_query):
+    def relevant_doc_retrieved(self, ranking, relevants_docs_query):
         true_positives = 0
         false_positives = 0
-        for doc in ranking:
-           if str(doc[0]) in relevants_docs_query.keys(): # position 3 indicates document ID
+        for doc in ranking[:self.relevant_docs]:
+           if str(doc[0]) in relevants_docs_query.keys():
                 true_positives += 1
            else:
                 false_positives += 1
@@ -289,25 +293,28 @@ class IrSystem:
     @staticmethod
     def __plot_results(recall, precision):
         plot.plot(recall, precision)
-        plot.xlabel('recall')
-        plot.ylabel('precision')       
+        plot.xlabel('Recobrado')
+        plot.ylabel('Precisión')       
         plot.draw()
-        plot.title('P/R curves')
+        plot.title('P/R')
         plot.show()
 
-    def __evaluate(self,ranking,relevants_docs_query,query_id):
+    def __evaluate(self,ranking,relevants_docs_query):
         
         [true_positives, false_positives] = self.relevant_doc_retrieved(ranking, relevants_docs_query)
 
         recall = IrSystem.__get_recall(true_positives,len(relevants_docs_query))
         precision = IrSystem.__get_precision(true_positives,false_positives)
+        f1 = 2 / (1/precision + 1/recall)
+
+        print(f"Precisión: {precision} \nRecobrado: {recall} \nMedida F1: {f1}")
 
         true_positives = 0
         false_positives = 0
         recall = []
         precision = []
         for doc in ranking:
-            if str(doc[0]) in relevants_docs_query.keys(): # position 3 indicates document ID
+            if str(doc[0]) in relevants_docs_query.keys():
                 true_positives += 1
             else:
                 false_positives += 1
@@ -322,29 +329,34 @@ class IrSystem:
         self.__plot_results(recalls_levels, interpolated_precisions)
 
 if __name__ == '__main__':
-    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - MED \n-> ')
-    irsystem = IrSystem(0.3, dataset)
+    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - MED \nEnter - Para terminar\n-> ')
+    if dataset == '1' or dataset == '2':
+        irsystem = IrSystem(0.3, dataset)
     
-    while True:
-        print('\nOpciones:')
-        mode = input(f"1 - Hacer una Consulta \n2 - Aplicar Retroalimentación de Rocchio a una Consulta \n3 - Analizar Rendimiento del Sistema \nEnter - Para terminar\n-> ")
-        if mode == '1':
-            query = input("\nEscribe una consulta: ")
-            irsystem.search(query, k = 5)
-        elif mode == '2':
-            print('\nAplicar Retroalimentación de Rocchio a:')
-            ask = [f'{query[0]} - {query[1][0]}\n' for query in enumerate(irsystem.searched.items())]
-            query = input("".join(ask) + 'Elegir ID -> ')
-            pass
-        elif mode == '3':
-            print("\n---------- Análisis del SRI -----------\n")
-            mode = input(f"1 - Análisis General \n2 - Análisis de una Consulta \nEnter - Atrás\n-> ")
+        while True:
+            print('\nOpciones:')
+            mode = input(f"1 - Hacer una Consulta \n2 - Aplicar Retroalimentación de Rocchio a una Consulta \n3 - Analizar Rendimiento del Sistema \nEnter - Para terminar\n-> ")
             if mode == '1':
-                pass
+                query = input("\nEscribe una consulta: ")
+                alpha = input("Escribe la Constante de Suavizado: ")
+                irsystem.search(query, alpha)
             elif mode == '2':
-                print('\nOpciones:')
-                ask = [f'{query[0]} - {query[1][0]}\n' for query in irsystem.searched.items()]
+                print('\nAplicar Retroalimentación de Rocchio a:')
+                ask = [f'{query[0]} - {query[1][0]}\n' for query in enumerate(irsystem.searched.items())]
                 query = input("".join(ask) + 'Elegir ID -> ')
-                irsystem.evaluate_query(query, True)
-        else:
-            break
+                pass
+            elif mode == '3':
+                print("\n---------- Análisis del SRI -----------\n")
+                while True:
+                    mode = input(f"1 - Análisis General \n2 - Análisis de una Consulta \nEnter - Atrás\n-> ")
+                    if mode == '1':
+                        pass
+                    elif mode == '2':
+                        print('\nOpciones:')
+                        ask = [f'{query[0]} - {query[1][0]}\n' for query in irsystem.searched.items()]
+                        query = input("".join(ask) + 'Elegir ID -> ')
+                        irsystem.evaluate_query(query, True)
+                    else:
+                        break
+            else:
+                break
