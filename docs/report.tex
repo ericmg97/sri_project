@@ -65,17 +65,13 @@
 \tocauthor{Authors' Instructions}
 \maketitle
 
-
-\begin{abstract}
-The abstract should summarize the contents of the paper and should
-contain at least 70 and at most 150 words. It should be written using the
-\emph{abstract} environment.
-\keywords{We would like to encourage you to list your keywords within
-the abstract section}
-\end{abstract}
-
-
 \section{Introducción}
+
+Los sistemas de recuperación de información brindan un manejo efectivo de un conjunto considerable de datos, poder realizar consultas a un conjunto de documentos por parte de los usuarios es una característica fundamental en estos, hoy en día son de vital importancia para todos, a diario realizamos búsquedas en Google, ResearchGate entre otros sitios los cuales cuentan con un volumen de información considerable. 
+
+La primera descripción de una computadora que buscaba información fue descrita por Holmstrom en 1948, detallando una mención temprana de la computadora Univac. Los sistemas automatizados de recuperación de información se introdujeron en la década de 1950. En la década de 1960, Gerard Salton en Cornell formó el primer gran grupo de investigación de recuperación de información. En la década de 1970, se había demostrado que varias técnicas de recuperación diferentes funcionaban bien en corpus de texto pequeños, como la colección Cranfield (varios miles de documentos). Los sistemas de recuperación a gran escala, como el sistema Lockheed Dialog, se empezaron a utilizar a principios de la década de 1970. 
+
+En este escrito analizaremos la implementación realizada de un IRS, primeramente exponiendo los conceptos teóricos empleados para el diseño del sistema, las herramientas empleadas para el procesamiento de los corpus y por último como se realiza la evaluación del modelo. 
 
 \section{Diseño del Sistema}
 
@@ -197,7 +193,7 @@ Podemos apreciar como se busca establecer una relación entre los valores de fre
 
 La retroalimentación de relevancia es una característica de algunos sistemas de recuperación de información . La idea detrás de la retroalimentación de relevancia es tomar los resultados que se devuelven inicialmente de una consulta determinada, recopilar la retroalimentación de los usuarios y utilizar información sobre si esos resultados son relevantes o no para realizar una nueva consulta. Podemos distinguir de manera útil entre tres tipos de retroalimentación: retroalimentación explícita, retroalimentación implícita y retroalimentación ciega o "pseudo".
 
-Debido a que emplear el TF-IDF no siempre resulta en una representación confiable debido a que cuando representamos los vectores perdemos el significado semántico además de las relaciones entre los términos, por ello decidimos incluir un algoritmo de retroalimentación explícito en nuestro caso, con el objetivo de suministrar al usuario una manera de mejorar el vector consulta, así podemos resolver problemas de ambigüedad entre otros para esto elegimos el algoritmo de Rocchio el cual es abordado en [CITAR ROCCHIO].
+Debido a que emplear el TF-IDF no siempre resulta en una representación confiable debido a que cuando representamos los vectores perdemos el significado semántico además de las relaciones entre los términos, por ello decidimos incluir un algoritmo de retroalimentación explícito en nuestro caso, con el objetivo de suministrar al usuario una manera de mejorar el vector consulta, así podemos resolver problemas de ambigüedad entre otros para esto elegimos el algoritmo de Rocchio el cual es abordado en \cite{rocchio}.
 
 \subsubsection*{Algoritmo de Rocchio:} Un algortimo simple y muy conocido para la retroalimentación en los sistemas de recuperación de información es el algoritmo de Rocchio, el cual era empleado en los IRS que surgieron del Sistema de Recuperación de Información SMART, desarrollado en 1960-1964. El enfoque de retroalimentación de Rocchio se desarrolló utilizando el Modelo de Espacio Vectorial que empleaba SMART. El algoritmo se basa en la suposición de que la mayoría de los usuarios tienen una concepción general de qué documentos deben indicarse como relevantes o no relevantes para la consulta que realizan. Por lo tanto, la consulta de búsqueda del usuario se revisa para incluir un porcentaje arbitrario de documentos relevantes y no relevantes como un medio para aumentar la precisión del motor de búsqueda.
 
@@ -230,14 +226,12 @@ El objeto que representa el IRS es \verb*|IrSystem|, el cual contiene las implem
 \noindent
 %
 \begin{verbatim}
-	class IrSystem:
-	   
+	class IrSystem:	   
 	   def __init__(self, alpha, dataset):
 	      ...
 	      
 	   def preprocess(self, data):
-	     ...
-	     
+	     ...	     
 	   ...
 \end{verbatim}
 %
@@ -247,9 +241,88 @@ Para realizar el preprocesado empleamos \textbf{nltk}, que es una poderosa herra
 
 Para el proceso de vectorización se emplean matrices esparcidas las cuales permiten representar vectores con 0 en muchas de sus componentes, para esto empleamos \verb*|scipy.sparse|. Para construir estos vectores primero se termino el vocabulario y luego se paso a implementar los cálculos de frecuencia. Para realizar calculos más comodos y poder manejar el conteo se empleo \verb*|numpy| y \verb*|collection.Counter|, de esta forma se crearon las funciones para calcular los pesos.
 
+El algoritmo de ranking emplea la similitud del coseno para determinar el orden en que serán dispuestos los documentos, usando la función \verb*|search| se realiza todo el proceso:
 
+\noindent
+%
+\begin{verbatim}
+	def search(self, query, query_id = False, k = -1, 
+	                               show_output = True, preview = 500):
+	    ...
+	    preprocessed_query = self.__preprocess(query)
+	    ...
+	    
+	    tokens = word_tokenize(str(preprocessed_query))
+	    
+	    d_cosines = []
+	    
+	    query_vector = self.__gen_query_vector(tokens)
+	    
+	    for d in self.tf_idf:
+	    d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
+	    
+	    out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).
+	                argsort()[-k:][::-1] if d_cosines[id].max() > 0.0]
+	    
+	    self.searched[query_id] = (query, out)
+	    ...
+\end{verbatim}
+%
+\noindent
+
+Esta función es la más importante ya que realiza el ranking de documentos según la relevancia, como se observa primero realiza el preprocesamiento de la consulta y luego la tokeniza para poder formar el vector, empleando el vector emplea los vectores internos resultantes del proceso de interpretación de los documentos para calcular la similitud y obtener la salida del sistema, las consultas con sus respectivos resultados son almacenadas para poder aplicar la retroalimentación mediante el algoritmo de Rocchio.
+
+% Falta: Explicacion codigo rocchio y funciones q se usan para evaluacion
 
 \section{Evaluación del Sistema}
+
+Para poder realizar la evaluación del sistema es necesario contar con colecciones de prueba, nuestro sistema emplea dos colecciones \textit{Cranfield} y \textit{MED} que es un corpus médico. Definiremos cuatro conjuntos fundamentales para definir las medidas de evaluación. 
+
+\begin{enumerate}
+	\item[] \textbf{RR:} Conjunto de Documentos recuperados relevantes
+	\item[] \textbf{RI:} Conjunto de Documentos recuperados irrelevantes
+	\item[] \textbf{NR:} Conjunto de Documentos no recuperados relevantes
+	\item[] \textbf{NI:} Conjunto de Documentos no recuperados irrelevantes
+\end{enumerate}
+
+Los documentos recuperados irrelevantes pueden ser considerados como falsos
+positivos, pues se recuperaron pero no eran interesantes para el usuario. De
+manera análoga, los documentos no recuperados relevantes son los falsos
+negativos. Empleando estos conjuntos definimos las siguientes medidas de evaluación:
+
+\subsubsection*{Precisión:} Razón de los documentos relevantes que son recuperados
+
+\begin{equation}
+	P = \frac{|RR|}{|RR \cup RI|}
+\end{equation}
+
+En el campo de la recuperación de información no solo interesa qué tan precisa es la
+respuesta, también que incluya a la mayor cantidad posible de documentos
+relevantes, por lo tanto la medida de precisión por sí sola no es suficiente en
+el caso de un modelo de recuperación de información.
+
+\subsubsection*{Recobrado:} Razón entre los documentos relevantes que fueron recuperados.
+
+\begin{equation}
+	R = \frac{|RR|}{|RR \cup NR|}
+\end{equation}
+
+Este es fundamental en los procesos de
+recuperación de información. Al contrario de la precisión el recobrado
+aumenta a medida que incorporamos más documentos a la respuesta, pues es
+cada vez más probable que los elementos del conjunto de documentos relevantes
+estén contenidos en nuestra respuesta.
+
+Es importante notar que las dos metidas ($P$ y $R$) se compensan, la precisión tiende a decrecer cuando la cantidad
+de documentos recuperados aumenta y siempre es posible obtener $R = 1$, si recuperamos todos los documentos para la consulta, pero en este caso obtendríamos una precisión baja. La solución ideal plantea un alto valor de recobrado tolerando la menor cantidad posible de falsos positivos, es decir, de documentos recuperados irrelevantes.
+
+\subsubsection*{Medida $F_1$:} Medida que armoniza Precisión y Recobrado teniéndolos en cuanta a ambos.
+
+\begin{equation}
+	F_1 = \frac{2 PR}{P + R}
+\end{equation}
+
+La medida $F_1$ toma un valor alto cuando Precisión y Recobrado son altos, por lo que $F_1$ puede verse como el intento de encontrar la mejor relación entre $P$ y $R$, donde ambos tienen igual importancia ($\beta = 1$)
 
 \section{Resultados Obtenidos}
 
@@ -257,27 +330,17 @@ Para el proceso de vectorización se emplean matrices esparcidas las cuales perm
 
 \begin{thebibliography}{4}
 
-\bibitem{jour} Smith, T.F., Waterman, M.S.: Identification of Common Molecular
-Subsequences. J. Mol. Biol. 147, 195--197 (1981)
+\bibitem{confs} C. Fleitas. Sistemas de Información, Departamento de Programación, Facultad de Matemática y Computación, Universidad de la Habana, 2021
 
-\bibitem{lncschap} May, P., Ehrlich, H.C., Steinke, T.: ZIB Structure Prediction Pipeline:
-Composing a Complex Biological Workflow through Web Services. In: Nagel,
-W.E., Walter, W.V., Lehner, W. (eds.) Euro-Par 2006. LNCS, vol. 4128,
-pp. 1148--1158. Springer, Heidelberg (2006)
+\bibitem{rocchio} J.J. Rocchio. Document Retrieval Systems–Optimization and Evaluation.
+PhD thesis, Harvard Computational Laboratory, Cambridge, MA, 1966.
 
-\bibitem{book} Foster, I., Kesselman, C.: The Grid: Blueprint for a New Computing
-Infrastructure. Morgan Kaufmann, San Francisco (1999)
+\bibitem{lectures} H. Yannakoudakis. Lecture 7: Relevance Feedback and Query
+Expansion Information Retrieval Computer Science Tripos Part II, Natural Language and Information Processing (NLIP) Group. University of Cambridge, 2018 
 
-\bibitem{proceeding1} Czajkowski, K., Fitzgerald, S., Foster, I., Kesselman, C.: Grid
-Information Services for Distributed Resource Sharing. In: 10th IEEE
-International Symposium on High Performance Distributed Computing, pp.
-181--184. IEEE Press, New York (2001)
+\bibitem{tds} \url{https://towardsdatascience.com/} : TF-IDF in Python
 
-\bibitem{proceeding2} Foster, I., Kesselman, C., Nick, J., Tuecke, S.: The Physiology of the
-Grid: an Open Grid Services Architecture for Distributed Systems
-Integration. Technical report, Global Grid Forum (2002)
-
-\bibitem{url} National Center for Biotechnology Information, \url{http://www.ncbi.nlm.nih.gov}
+\bibitem{nltk} \url{http://www.nltk.org/} : NLTK API
 
 \end{thebibliography}
 
