@@ -108,7 +108,7 @@ Estas técnicas son las empleadas por el sistema para obtener un conjunto de tex
                    'body': Tokenize(doc_body),
                    ],
                    ...
-            }
+             }
 \end{verbatim}
 %
 \noindent
@@ -141,7 +141,7 @@ Como en el caso de TF también normalizamos dividiendo por el número total de d
 Ahora combinemos ambas frecuencias, de esta forma tendremos una relación entre términos de mucha ocurrencia con respecto a aquellos que de baja frecuencia en los documentos.
 
 \begin{equation}
-	w(t_i, d_j) = f_s(t_i, d_j) \log{\frac{|D|}{d_s(t_i) + 1}}
+	w(t_i, d_j) = f_s(t_i, d_j) \cdot \log{\frac{|D|}{d_s(t_i) + 1}}
 \end{equation}
 
 Hasta el momento se ha expuesto el concepto de TF-IDF para documentos pero ignorando si tienen titulo o no. Los textos que conforman el corpus del motor de búsqueda tienen diversas características y hemos elegido el titulo y el cuerpo para representar, por lo tanto debemos determinar cual de estos es más importante, o sea para dar un valor de relevancia a un documento que tiene mayor peso el título o el cuerpo, para ello definamos el parámetro $\alpha$ el cual define cuanto peso le damos al título a la hora de calcular la relevancia, de esta forma tendríamos que determinar los valores de TF-IDF tanto para el título como para el cuerpo, relacionando estos valores con $\alpha$ para obtener la frecuencia final para el término en el documento. Como los valores de TF-IDF para un término no toman en cuenta si este se encontraba en el titulo del documento o en el cuerpo, como se expreso anteriormente entonces definamos $w_t$ como el valor de TF-IDF para un término en el título y $w_b$ para cuando se encuentra en el cuerpo del documento. Finalmente obtenemos la expresión.
@@ -168,11 +168,58 @@ Como sabemos en el sistema existe un conjunto $Q$ que contiene las consultas rea
 
 Se usa el mismo vocabulario $V$ empleado para la representación del corpus, y se procese a crear el vector $\overrightarrow{q_i}$, en caso que existan palabras en $q_i$ que no se encuentran en el vocabulario serán ignoradas. 
 
-El valor que tomarán las componentes no tiene necesariamente que ser calculo igual a como se realiza en el motor de búsqueda para representar el corpus, puede depender de la función de ranking o si usamos un modelo un poco más complejo.
+El valor que tomarán las componentes no tiene necesariamente que ser calculo igual a como se realiza en el motor de búsqueda para representar el corpus, puede depender de la función de ranking o si usamos un modelo un poco más complejo. En nuestro caso tomamos dos representaciones vectoriales acorde a como se calculaba el ranking.
 
 \subsection*{Función de Ranking} 
 
-\subsection*{Salida del Sistema}
+Ahora es necesario relacionar la consulta con el corpus para determinar el valor de relevancia que tienen los documentos con respecto a la consulta realizada o sea debemos definir la función $R(q_i, d_j)$ para esto empleamos dos enfoques.
+
+\paragraph{Puntuación Coincidente:} Una forma sencilla de calcular la similitud es emplear este enfoque primeramente representamos el vector de consulta $\overrightarrow{q_i}$ de forma binaria, asignando 1 para los términos que aparecen en la consulta, 0 en caso que no, luego para cada documento sumamos los valores de TF-IDF que tienen 1 en el vector consulta, de esta forma se obtiene el valor de similitud para realizar la ordenación.
+Para realizar esta función solo es necesario hacer un producto escalar de los vectores
+
+\begin{equation}
+	R(q_i, d_j) = \overrightarrow{q_i} \cdot \overrightarrow{d_j} = \sum_{l = 0}^{|V|} w(t_l, d_j) \cdot w(t_l, q_i)
+\end{equation}
+
+De esta forma obtenemos mayores valores de relevancia para documentos que tengas valores de frecuencia alta para los términos que componen la consulta. Al representar el vector consulta solamente con 0 y 1 no aprovechamos la similitud que podría existir entre sus valores de frecuencia, o sea es posible que en la consulta podamos determinar que términos son más importantes que otros a la hora de realizar la búsqueda. 
+
+\paragraph{Similitud del Coseno:} Primeramente colocaremos ahora el valor de TF-IDF asociado al término en la consulta y emplearemos el coseno del angulo comprendido entre los vectores consulta $\overrightarrow{q_i}$ y documento $\overrightarrow{d_j}$ para determinar la similitud, la función $R$ sería:
+
+\begin{equation}
+	R(q_i, d_j) = \frac{\overrightarrow{q_i} \cdot \overrightarrow{d_j}}{|\overrightarrow{q_i}| \cdot |\overrightarrow{d_j}|} = \frac{\sum_{l = 0}^{|V|} w(t_l, d_j) \cdot w(t_l, q_i)}{\sqrt{\sum_{l = 0}^{|V|} w^2(t_l, q_i)} \cdot \sqrt{\sum_{l = 0}^{|V|} w^2(t_l, d_j)}}
+\end{equation}
+
+Podemos apreciar como se busca establecer una relación entre los valores de frecuencia de la consulta y el documento de esta forma analizamos aquellos términos de la consulta que son más importantes y buscamos similitud con respecto al corpus.
+
+\paragraph{Output del Sistema:} Una vez que tenemos la función de ranking pasamos a obtener los valores correspondientes para la consulta, ordenamos de forma descendente aquellos que son distintos de 0. Suministrando el titulo del documento y el valor obtenido.
+
+\subsection*{Retroalimentación de Relevancia}
+
+La retroalimentación de relevancia es una característica de algunos sistemas de recuperación de información . La idea detrás de la retroalimentación de relevancia es tomar los resultados que se devuelven inicialmente de una consulta determinada, recopilar la retroalimentación de los usuarios y utilizar información sobre si esos resultados son relevantes o no para realizar una nueva consulta. Podemos distinguir de manera útil entre tres tipos de retroalimentación: retroalimentación explícita, retroalimentación implícita y retroalimentación ciega o "pseudo".
+
+Debido a que emplear el TF-IDF no siempre resulta en una representación confiable debido a que cuando representamos los vectores perdemos el significado semántico además de las relaciones entre los términos, por ello decidimos incluir un algoritmo de retroalimentación explícito en nuestro caso, con el objetivo de suministrar al usuario una manera de mejorar el vector consulta, así podemos resolver problemas de ambigüedad entre otros para esto elegimos el algoritmo de Rocchio el cual es abordado en [CITAR ROCCHIO].
+
+\subsubsection*{Algoritmo de Rocchio:} Un algortimo simple y muy conocido para la retroalimentación en los sistemas de recuperación de información es el algoritmo de Rocchio, el cual era empleado en los IRS que surgieron del Sistema de Recuperación de Información SMART, desarrollado en 1960-1964. El enfoque de retroalimentación de Rocchio se desarrolló utilizando el Modelo de Espacio Vectorial que empleaba SMART. El algoritmo se basa en la suposición de que la mayoría de los usuarios tienen una concepción general de qué documentos deben indicarse como relevantes o no relevantes para la consulta que realizan. Por lo tanto, la consulta de búsqueda del usuario se revisa para incluir un porcentaje arbitrario de documentos relevantes y no relevantes como un medio para aumentar la precisión del motor de búsqueda.
+
+El algoritmo de rocchio busca realizar una mejora a la consulta que deseamos, podemos ver como consulta $\overrightarrow{q_i}$ realiza una bipartición del conjunto $D$ en dos conjunto $D_R$ donde se encuentran aquellos documentos cuya relevancia es distinta de 0 y $D - D_R$ serán aquellos que no son relevantes. Ahora debemos encontrar una consulta optima a partir de $\overrightarrow{q_i}$ para la cual se maximice la similitud con el conjunto de documentos relevantes $D_R$ implicando un valor mínimo de similitud para el conjunto de textos no relevantes:
+
+\begin{equation}
+	\overrightarrow{{q_i}}_{opt} = \verb*|argmax|_{\overrightarrow{q_i}} \left[ R(\overrightarrow{q_i}, D_R) - R(\overrightarrow{q_i}, D - D_R) \right] 
+\end{equation}
+
+Podemos emplear como $R$ la similitud del coseno vista anteriormente o también el centroide del conjunto de documentos seleccionado, este último resulta más útil que ya que necesitamos reducir la similitud acorde a un subconjunto de $D$, aplicando el centroide y sustituyendo se obtiene:
+
+\begin{equation}
+	\overrightarrow{{q_i}}_{opt} = \frac{1}{|D_R|} \sum_{\overrightarrow{d_j} \in D_R} \overrightarrow{d_j} - \frac{1}{|D - D_R|} \sum_{\overrightarrow{d_j} \notin D_R} \overrightarrow{d_j} 
+\end{equation}
+
+Este enfoque no es muy utilizado frecuentemente debido a que el conjunto $D$ puede ser muy grande por lo tanto determinar el centroide sobre una bipartición para optimizar la consulta no resultará muy eficiente. Por eso se emplean 3 parámetros $\alpha, \beta $ y $\gamma$  para definir peso asociado a la consulta original, el conjunto de documentos relevantes y el de no relevantes, de esta forma podemos seleccionar subconjuntos. La expresión matemática final será:
+
+\begin{equation}
+	\overrightarrow{q_m} = \alpha · \overrightarrow{q_0} + \beta \frac{1}{|D_R|} \sum_{\overrightarrow{d_j} \in D_R} \overrightarrow{d_j} - \gamma \frac{1}{|D - D_R|} \sum_{\overrightarrow{d_j} \notin D_R} \overrightarrow{d_j}
+\end{equation}
+
+Donde $\overrightarrow{q_0}$ es el vector de la consulta que se desea optimizar, $D_R$ es el conjunto formado por los documentos relevantes, los parámetros funcionan como valores de confianza a la hora de operar con cada miembro de la expresión, por ejemplo si quisiéramos tener muchos documentos en ambas categorías entonces deberíamos dar valores mayores a $\beta$ y $\gamma$. Al aplicar esta expresión la consulta original se acerca más hacia el centroide de documentos relevantes y se aleja de los no relevantes, está nueva consulta será ahora la empleada por el IRS. Los valores negativos en el nuevo vector se asumen como 0, debido a que solamente son validos los valores para el primer cuadrante. Como hemos dicho esto mejora la precisión y el recall del sistema, principalmente en la práctica se ha demostrado como el recall es el más beneficiado ayudando a optimizar la búsqueda. Un aspecto importante es como la interacción con el usuario determina que tan buen valor de recall obtenemos, el tiempo que tomen en revisar los resultados, evaluarlos y determinar si satisface lo deseado es fundamental. En la práctica es común usar $\alpha = 1, \beta = 0.75$ y $\gamma = 0.15$, como se aprecia se busca mantener el sentido de la consulta original y obtener la mayor cantidad de documentos relevantes.
 
 \section{Sobre la implementación} % aqui link a github
 
