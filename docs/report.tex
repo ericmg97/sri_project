@@ -223,6 +223,32 @@ Donde $\overrightarrow{q_0}$ es el vector de la consulta que se desea optimizar,
 
 \section{Sobre la implementación} % aqui link a github
 
+La implementación del sistema se realizó en \verb*|Python|, ya que cuenta con muchas herramientas para el procesamiento de texto, la representación de vectores de forma optima y al ser tan empleado para realizar trabajos con IRS se cuenta con una extensa documentación.
+
+El objeto que representa el IRS es \verb*|IrSystem|, el cual contiene las implementaciones de los temas abordados en la sección anterior. Para crear una instancia se emplea el valor de $\alpha$ para definir el peso que se le da al título de los documentos, y la dirección del dataset que será empleado, el cual contiene el corpus. Si nuestro corpus no contiene textos con título solamente tendremos que hacer $\alpha = 0$, para que no se tome en cuenta el peso del título.
+
+\noindent
+%
+\begin{verbatim}
+	class IrSystem:
+	   
+	   def __init__(self, alpha, dataset):
+	      ...
+	      
+	   def preprocess(self, data):
+	     ...
+	     
+	   ...
+\end{verbatim}
+%
+\noindent
+
+Para realizar el preprocesado empleamos \textbf{nltk}, que es una poderosa herramienta en el procesamiento de lenguaje natural. Para retirar las stopwords se empleo \verb*|nltk.corpus.stopwords| que brinda una colección extensa de palabras en ingles. Para el proceso de stemming se usó \verb*|nltk.stem.PorterStemmer|, el PorterStemmer retira sufijos y prefijos de las palabras dejando solamente la raíz, es tal vez uno de los más empleados. Adicionalmente para tokenizar el texto preprocesado se empleo \verb*|nltk.tokenize.word_tokenize|.
+
+Para el proceso de vectorización se emplean matrices esparcidas las cuales permiten representar vectores con 0 en muchas de sus componentes, para esto empleamos \verb*|scipy.sparse|. Para construir estos vectores primero se termino el vocabulario y luego se paso a implementar los cálculos de frecuencia. Para realizar calculos más comodos y poder manejar el conteo se empleo \verb*|numpy| y \verb*|collection.Counter|, de esta forma se crearon las funciones para calcular los pesos.
+
+
+
 \section{Evaluación del Sistema}
 
 \section{Resultados Obtenidos}
