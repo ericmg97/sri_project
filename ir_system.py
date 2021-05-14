@@ -269,10 +269,13 @@ class IrSystem:
 
         recall = IrSystem.__get_recall(true_positives,len(relevants_docs_query))
         precision = IrSystem.__get_precision(true_positives,false_positives)
-        f1 = 2 / (1/precision + 1/recall)
+        if precision and recall:
+            f1 = 2 / (1/precision + 1/recall)
+        else:
+            f1 = 0
 
         if show_output:
-            print(f"Precisión: {precision} \nRecobrado: {recall} \nMedida F1: {f1}\n")
+            print(f"\nPrecisión: {precision} \nRecobrado: {recall} \nMedida F1: {f1}\n")
 
             true_positives = 0
             false_positives = 0
@@ -337,13 +340,17 @@ class IrSystem:
         sum_recall = 0
         sum_precision = 0
         sum_f1 = 0
+        sum_errors = 0
         for query in self.searched.keys():
             recall, precision, f1 = self.evaluate_query(query, False)
             sum_recall += recall
             sum_precision += precision
             sum_f1 += f1
+            if not f1:
+                sum_errors += 1
 
-        print(f'Promedio de Precisión: {sum_precision/len(self.querys)} \nPromedio de Recobrado: {sum_recall/len(self.querys)} \nPromedio de Medida F1: {sum_f1/len(self.querys)}\n')
+
+        print(f'Promedio de Precisión: {sum_precision/len(self.querys)} \nPromedio de Recobrado: {sum_recall/len(self.querys)} \nPromedio de Medida F1: {sum_f1/len(self.querys)} \nNingún Documento Relevante Recuperado: {sum_errors} Veces ({sum_errors*100/len(self.querys)}%)\n')
 
     def executeRochio(self, query_id, relevants, alpha, beta, gamma):
         if query_id in self.searched.keys():
