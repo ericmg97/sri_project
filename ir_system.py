@@ -182,7 +182,7 @@ class IrSystem:
         qsynset = set()
         nquery = tokens
 
-        for tk in tokens: 
+        for tk in tokens:         
             for sset in wordnet.synsets(tk):
                 qsynset = qsynset.union( sset.lemma_names() )
 
