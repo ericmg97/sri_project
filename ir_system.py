@@ -1,8 +1,10 @@
 from nltk.corpus import stopwords
+from nltk.sem.logic import ExistsExpression
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from collections import Counter
 import matplotlib.pyplot as plot
+from numpy.core.defchararray import array
 from numpy.lib.function_base import average
 from scipy.sparse import data, lil_matrix, csr_matrix
 import json
@@ -36,7 +38,7 @@ class IrSystem:
             with open('datasets\Med\MED.REL.json') as data:    
                 self.rel = json.load(data)    
         else:
-            return
+            raise Exception
 
         self.data = {}
         self.relevant_docs = int(average([len(queries.values()) for queries in self.rel.values()]))
@@ -175,8 +177,7 @@ class IrSystem:
             self.tf_idf[i[0], ind] = tf_idf[i]
         
         self.tf_idf = csr_matrix(self.tf_idf)
-
-            
+          
     def __gen_query_vector(self, tokens, alpha):
 
         Q = lil_matrix((1, self.total_vocab_size))
@@ -212,49 +213,12 @@ class IrSystem:
         out[nz] = np.sqrt(np.add.reduceat(np.square(A.data),A.indptr[nz]))
         return out
 
-
     def __print_search(self, out, preview):
         for doc in out:
             print(f"{doc[0]} - { self.dataset[str(doc[0])]['title'] if self.dataset[str(doc[0])]['title'] != '' else 'Not Title'}\nText: {self.dataset[str(doc[0])]['abstract'][:preview]}")
             print()
 
-    def search(self, query, alpha = 0.4, query_id = False, k = -1, preview = 500):
-        if query_id and query_id in self.searched.keys():
-            self.__print_search(self.searched[query_id][1], preview)
-            return
-        
-        preprocessed_query = self.__preprocess(query)
-            
-        if (not query_id):
-            print("\n---------- Ejecutando Búsqueda -----------\n")
-        
-        tokens = word_tokenize(str(preprocessed_query))
-    
-        d_cosines = []
-        
-        query_vector = self.__gen_query_vector(tokens, float(alpha))
-        
-        for d in self.tf_idf:
-            d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
-
-        out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[-k:][::-1] if d_cosines[id] and d_cosines[id].max() > 0.0]
-
-        if query_id:
-            self.searched[query_id] = (query, out)
-        else:
-            self.__print_search(out[:self.relevant_docs], preview)
-
-    def evaluate_query(self,query_id, show_output):
-        if str(query_id) not in self.searched.keys():
-            print("Consulta no encontrada")
-            return
-
-        if (show_output):
-            print("\nConsulta: " + self.searched[str(query_id)][0]) 
-
-        self.__evaluate(self.searched[query_id][1],self.rel[str(query_id)])
-
-    def relevant_doc_retrieved(self, ranking, relevants_docs_query):
+    def __relevant_doc_retrieved(self, ranking, relevants_docs_query):
         true_positives = 0
         false_positives = 0
         for doc in ranking[:self.relevant_docs]:
@@ -299,64 +263,121 @@ class IrSystem:
         plot.title('P/R')
         plot.show()
 
-    def __evaluate(self,ranking,relevants_docs_query):
+    def __evaluate(self,ranking,relevants_docs_query, show_output):
         
-        [true_positives, false_positives] = self.relevant_doc_retrieved(ranking, relevants_docs_query)
+        [true_positives, false_positives] = self.__relevant_doc_retrieved(ranking, relevants_docs_query)
 
         recall = IrSystem.__get_recall(true_positives,len(relevants_docs_query))
         precision = IrSystem.__get_precision(true_positives,false_positives)
         f1 = 2 / (1/precision + 1/recall)
 
-        print(f"Precisión: {precision} \nRecobrado: {recall} \nMedida F1: {f1}")
+        if show_output:
+            print(f"Precisión: {precision} \nRecobrado: {recall} \nMedida F1: {f1}\n")
 
-        true_positives = 0
-        false_positives = 0
-        recall = []
-        precision = []
-        for doc in ranking:
-            if str(doc[0]) in relevants_docs_query.keys():
-                true_positives += 1
-            else:
-                false_positives += 1
+            true_positives = 0
+            false_positives = 0
+            recall = []
+            precision = []
+            for doc in ranking:
+                if str(doc[0]) in relevants_docs_query.keys():
+                    true_positives += 1
+                else:
+                    false_positives += 1
 
-            recall.append(self.__get_recall(true_positives,len(relevants_docs_query)))
-            precision.append(self.__get_precision(true_positives,false_positives))
+                recall.append(self.__get_recall(true_positives,len(relevants_docs_query)))
+                precision.append(self.__get_precision(true_positives,false_positives))
 
 
-        recalls_levels = np.array([ 0. ,  0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9,  1. ]) 
+            recalls_levels = np.array([ 0. ,  0.1,  0.2,  0.3,  0.4,  0.5,  0.6,  0.7,  0.8,  0.9,  1. ]) 
 
-        interpolated_precisions = self.__interpolate_precisions(recall,precision,recalls_levels)
-        self.__plot_results(recalls_levels, interpolated_precisions)
+            interpolated_precisions = self.__interpolate_precisions(recall,precision,recalls_levels)
+            self.__plot_results(recalls_levels, interpolated_precisions)
+            return
+        else:
+            return recall, precision, f1
 
-if __name__ == '__main__':
-    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - MED \nEnter - Para terminar\n-> ')
-    if dataset == '1' or dataset == '2':
-        irsystem = IrSystem(0.3, dataset)
+    def search(self, query = '', alpha = 0.4, query_id = False, k = -1, preview = 500):
+        if query_id and query_id in self.searched.keys():
+            self.__print_search(self.searched[query_id][1][:self.relevant_docs], preview)
+            return
+        
+        preprocessed_query = self.__preprocess(query)
+            
+        if (not query_id):
+            print("\n---------- Ejecutando Búsqueda -----------\n")
+        
+        tokens = word_tokenize(str(preprocessed_query))
     
-        while True:
-            print('\nOpciones:')
-            mode = input(f"1 - Hacer una Consulta \n2 - Aplicar Retroalimentación de Rocchio a una Consulta \n3 - Analizar Rendimiento del Sistema \nEnter - Para terminar\n-> ")
-            if mode == '1':
-                query = input("\nEscribe una consulta: ")
-                alpha = input("Escribe la Constante de Suavizado: ")
-                irsystem.search(query, alpha)
-            elif mode == '2':
-                print('\nAplicar Retroalimentación de Rocchio a:')
-                ask = [f'{query[0]} - {query[1][0]}\n' for query in enumerate(irsystem.searched.items())]
-                query = input("".join(ask) + 'Elegir ID -> ')
-                pass
-            elif mode == '3':
-                print("\n---------- Análisis del SRI -----------\n")
-                while True:
-                    mode = input(f"1 - Análisis General \n2 - Análisis de una Consulta \nEnter - Atrás\n-> ")
-                    if mode == '1':
-                        pass
-                    elif mode == '2':
-                        print('\nOpciones:')
-                        ask = [f'{query[0]} - {query[1][0]}\n' for query in irsystem.searched.items()]
-                        query = input("".join(ask) + 'Elegir ID -> ')
-                        irsystem.evaluate_query(query, True)
-                    else:
-                        break
-            else:
-                break
+        d_cosines = []
+        
+        query_vector = self.__gen_query_vector(tokens, float(alpha))
+        
+        for d in self.tf_idf:
+            d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
+
+        out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[-k:][::-1] if d_cosines[id] and d_cosines[id].max() > 0.0]
+
+        if query_id:
+            self.searched[query_id] = (query_vector, out)
+        else:
+            self.__print_search(out[:self.relevant_docs], preview)
+
+    def evaluate_query(self,query_id, show_output):
+        if str(query_id) not in self.searched.keys():
+            print("Consulta no encontrada")
+            return
+
+        if (show_output):
+            print("\nConsulta: " + self.querys[str(query_id)]['text']) 
+
+        return self.__evaluate(self.searched[query_id][1],self.rel[str(query_id)], show_output)
+
+    def evaluate_system(self):
+        print("\n---------- Ejecutando Evaluación General del Sistema -----------\n")
+        sum_recall = 0
+        sum_precision = 0
+        sum_f1 = 0
+        for query in self.searched.keys():
+            recall, precision, f1 = self.evaluate_query(query, False)
+            sum_recall += recall
+            sum_precision += precision
+            sum_f1 += f1
+
+        print(f'Promedio de Precisión: {sum_precision/len(self.querys)} \nPromedio de Recobrado: {sum_recall/len(self.querys)} \nPromedio de Medida F1: {sum_f1/len(self.querys)}\n')
+
+    def executeRochio(self, query_id, relevants, alpha, beta, gamma):
+        if query_id in self.searched.keys():
+            query = self.searched[query_id]
+
+            query_vector = query[0]
+
+            rel_docs = 0
+            sum_rel_docs = 0
+            nonrel_docs = 0
+            sum_nonrel_docs = 0
+
+            for doc in query[1][:self.relevant_docs]:
+                if str(doc[0]) in relevants:
+                    rel_docs += 1
+                    sum_rel_docs += doc[1]
+                else:
+                    nonrel_docs += 1
+                    sum_nonrel_docs  += doc[1]
+                
+            term1 = [alpha*word for word in query_vector.toarray()]
+
+            term2 = float(beta)/rel_docs * sum_rel_docs
+            term3 = -float(gamma)/nonrel_docs * sum_nonrel_docs
+                        
+            pos=0   
+            while pos < len(term1):
+                term1[pos] += term2 + term3
+                pos += 1  
+            
+            d_cosines = []
+            for d in self.tf_idf:
+                d_cosines.append(IrSystem.__cosine_sim(d, csr_matrix(term1)))
+
+            out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[1:][::-1] if d_cosines[id] and d_cosines[id].max() > 0.0]
+            
+            self.searched[query_id] = (csr_matrix(term1), out)
