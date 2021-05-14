@@ -265,11 +265,9 @@ El algoritmo de ranking emplea la similitud del coseno para determinar el orden 
 	    query_vector = self.__gen_query_vector(tokens)
 	    
 	    for d in self.tf_idf:
-	    d_cosines.append(IrSystem.__cosine_sim(d, query_vector))
-	    
+	    d_cosines.append(IrSystem.__cosine_sim(d, query_vector))	    
 	    out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).
-	                argsort()[-k:][::-1] if d_cosines[id].max() > 0.0]
-	    
+	                argsort()[-k:][::-1] if d_cosines[id].max() > 0.0]	    
 	    self.searched[query_id] = (query, out)
 	    ...
 \end{verbatim}
@@ -334,6 +332,94 @@ de documentos recuperados aumenta y siempre es posible obtener $R = 1$, si recup
 La medida $F_1$ toma un valor alto cuando Precisión y Recobrado son altos, por lo que $F_1$ puede verse como el intento de encontrar la mejor relación entre $P$ y $R$, donde ambos tienen igual importancia ($\beta = 1$)
 
 \section{Resultados Obtenidos}
+
+Empleando los datasets para evaluar el sistema empleando las medidas expuestas obtenemos una serie de resultados que permiten saber que tan eficiente es el IRS implementado. Para ello se emplea un archivo que contiene los valores de relevancia esperados. 
+
+El proceso de evaluación del sistema permite primeramente seleccionar el dataset a usar para las pruebas, luego se realiza una corrida del sistema, recibiendo como entrada todas las consultas de prueba, así se obtienen para cada una los valores de medidas junto a los de documentos relevantes, después de esto contamos con un IRS que ha procesado y almacenado todas las consultas de prueba para el dataset, podemos en este punto realizar 3 acciones:
+
+\begin{enumerate}
+	\item Realizar una nueva consulta, esto permite añadir nuevas consultas para continuar testeando el sistema
+	\item Calcular las medidas por consulta y global además de generar el grafico P/R 
+	\item Mejorar la consulta mediante retroalimentacion de Rocchio
+\end{enumerate}
+
+La primera acción podemos emplearla para ver que textos fueron seleccionados y en que orden para una consulta, sea de prueba o una nueva que decidamos formular. La segunda operación comprueba las medidas del sistema, por ejemplo, si tenemos la primera consulta del dataset Cranfield: \\
+
+\begin{verbatim}
+	what similarity laws must be obeyed when constructing aeroelastic 
+	models of heated high speed aircraft
+\end{verbatim}
+
+Para esta consulta se determinaron los valores de precision, recobrado y f1-score obteniéndose:
+
+\begin{figure}
+	\centering
+	\includegraphics[height=1.3cm]{imgs/eval_query1_cran.png}
+	\caption{Medidas para la primera consulta del Cranfield}
+	\label{fig:cran1}
+\end{figure}
+
+Se observa la relación existente entre precision y recobrado, para una mejor representación se emplea el grafico P/R:
+
+\begin{figure}
+	\centering
+	\includegraphics[height=6.3cm]{imgs/pr_query1_cran.png}
+	\caption{Gráfica P/R para la primera consulta del Cranfield}
+	\label{fig:cran1img}
+\end{figure}
+
+Ahora determinemos de forma general las medidas para todo el dataset de Cranfield, de esta forma sabremos el promedio de documentos relevantes recuperados (Fig. \ref{fig:cran1gen}).
+
+\begin{figure}
+	\centering
+	\includegraphics[height=2.3cm]{imgs/eval_general_cran.png}
+	\caption{Medidas Generales para el Dataset de Cranfield}
+	\label{fig:cran1gen}
+\end{figure}
+
+Estos resultados son aceptables tomando en cuenta que empleamos un modelo vectorial empleando TF-IDF con algunas modificaciones, entre algunas características extras se implementó un \textbf{query expansion} empleando WordNet que es un tesauro suministrado por NLTK, para cada termino de la consulta añadíamos sus sinónimos lematizados, al realizar las pruebas al sistema se redujo los valores de precisión y recobrado al obtener documentos que si bien podrían estar relacionados o vinculados al tema no eran considerados relevantes. Debido a eso se decidió que esta característica fuera empleada a la hora de realizar nuevas consultas por el usuario.
+
+Ahora mostraremos los resultados para el dataset MED, el cual contiene textos sobres temas médicos, primeramente analizaremos los resultados para la consulta de prueba 27 y luego de forma general (los datos del dataset pueden ser encontrados en el código del sistema en \verb*|/dataset/MED|). La consulta 27 es la siguientes:
+
+\begin{verbatim}
+	interested in the parasitic diseases.  filaria parasites found 
+	in primates, the insect vectors of filaria, the related diptera, 
+	i. e.,culicoides, mosquitos, etc. that may serve as vectors of 
+	this\ninfection-disease; also the life cycles and transmission of 
+	the filaria.parasites and ecology of the taiwan monkey,macaca with
+	cyclopis emphasis on the filarial parasite, macacanema formosana.
+\end{verbatim}
+
+Esta consulta fue seleccionada al ser extensa ademas que presenta abreviaturas, signos de puntuación dispuestos de forma excesiva y palabras mal colocadas, de esta forma podemos comprobar que tan bien recupera información asociada a esta. Los valores de medidas para esta son (Fig. \ref{fig:med1}) :
+
+\begin{figure}
+	\centering
+	\includegraphics[height=3.3cm]{imgs/eval_query27_med.png}
+	\caption{Medidas para la consulta 27 de MED}
+	\label{fig:med1}
+\end{figure}
+
+Y su gráfico P/R es el siguiente (Fig. 5):
+
+\begin{figure}
+	\centering
+	\includegraphics[height=6.3cm]{imgs/pr_query27_med.png}
+	\caption{Gráfico P/R para la consulta 27 de MED}
+	\label{fig:med1pr}
+\end{figure}
+
+Finalmente los valores de forma general para el dataset (Fig .6). 
+
+\begin{figure}
+	\centering
+	\includegraphics[height=2.3cm]{imgs/eval_general_med.png}
+	\caption{Medidas Generales para el Dataset MED}
+	\label{fig:med1gen}
+\end{figure}
+
+Estos resultados aunque sean mejor que para Cranfield, hay que tomar en cuenta la dimensión del dataset, en este caso el número de consultas y de documentos no es tan grande como el de Cranfield por lo tanto a la hora de la representación es posible que se tomen características más particulares de los documentos que conforman el corpus. 
+
+% Falta como Rocchio mejora los valores
 
 \section{Recomendaciones}
 

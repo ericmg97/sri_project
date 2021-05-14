@@ -323,7 +323,7 @@ class IrSystem:
             print("\n---------- Ejecutando Búsqueda -----------\n")
         
         tokens = word_tokenize(str(preprocessed_query))
-        tokens = self.query_expansion(tokens)
+        # tokens = self.query_expansion(tokens)
 
         d_cosines = []
         
