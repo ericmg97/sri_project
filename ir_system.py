@@ -1,4 +1,4 @@
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 from collections import Counter
@@ -176,7 +176,19 @@ class IrSystem:
         
         self.tf_idf = csr_matrix(self.tf_idf)
 
-            
+    def query_expansion(self, tokens):
+        """ Use a tokenized and preprocessed query """
+
+        qsynset = set()
+        nquery = tokens
+
+        for tk in tokens: 
+            for sset in wordnet.synsets(tk):
+                qsynset = qsynset.union( sset.lemma_names() )
+
+        nquery += qsynset
+        return nquery
+
     def __gen_query_vector(self, tokens, alpha):
 
         Q = lil_matrix((1, self.total_vocab_size))
@@ -229,7 +241,8 @@ class IrSystem:
             print("\n---------- Ejecutando Búsqueda -----------\n")
         
         tokens = word_tokenize(str(preprocessed_query))
-    
+        tokens = self.query_expansion(tokens) # expand query using wordnet 
+
         d_cosines = []
         
         query_vector = self.__gen_query_vector(tokens, float(alpha))

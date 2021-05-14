@@ -166,6 +166,12 @@ Se usa el mismo vocabulario $V$ empleado para la representación del corpus, y s
 
 El valor que tomarán las componentes no tiene necesariamente que ser calculo igual a como se realiza en el motor de búsqueda para representar el corpus, puede depender de la función de ranking o si usamos un modelo un poco más complejo. En nuestro caso tomamos dos representaciones vectoriales acorde a como se calculaba el ranking.
 
+Para el caso de crear el vector usando TF-IDF se agrega un parámetro de suavizado $a$, el cual permite amortiguar la frecuencia, evitando que aparezcan grandes saltos de frecuencia o consecutivamente el mismo valor de frecuencia, por lo tanto obtendríamos:
+
+\begin{equation}
+	w_q(t_i, d_j) = \left( a + (1 - a)  · f_s(t_i, d_j) \right) \cdot \log{\frac{|D|}{d_s(t_i) + 1}}	
+\end{equation}
+
 \subsection*{Función de Ranking} 
 
 Ahora es necesario relacionar la consulta con el corpus para determinar el valor de relevancia que tienen los documentos con respecto a la consulta realizada o sea debemos definir la función $R(q_i, d_j)$ para esto empleamos dos enfoques.
@@ -272,7 +278,10 @@ El algoritmo de ranking emplea la similitud del coseno para determinar el orden 
 
 Esta función es la más importante ya que realiza el ranking de documentos según la relevancia, como se observa primero realiza el preprocesamiento de la consulta y luego la tokeniza para poder formar el vector, empleando el vector emplea los vectores internos resultantes del proceso de interpretación de los documentos para calcular la similitud y obtener la salida del sistema, las consultas con sus respectivos resultados son almacenadas para poder aplicar la retroalimentación mediante el algoritmo de Rocchio.
 
-% Falta: Explicacion codigo rocchio y funciones q se usan para evaluacion
+% Falta: Explicacion codigo rocchio 
+
+Para la evaluacion del sistema se implementaron las tres medidas de evaluación, precision, recobrado y f1-score. Estas estan pensadas para poder evaluar una consulta de forma individual, para ello se define una función que determina los documentos relevantes recuperados para la consulta y de esa forma se calculan las tres medidas fundamentales \verb*|get_recall|, \verb*|get_precision| y \verb*|f1_score|. Para determinar los resultados globales, o sea tomando en cuenta todas las consultas se emplea \verb*|numpy| para el promedio de los valores.
+Para visualizar la relación entre la precisión y el recobrado se cuenta con la función \verb*|plot_results| que muestra la gráfica P/R correspondiente, ya sea para una consulta en particular o de forma global.  
 
 \section{Evaluación del Sistema}
 
@@ -327,6 +336,15 @@ La medida $F_1$ toma un valor alto cuando Precisión y Recobrado son altos, por 
 \section{Resultados Obtenidos}
 
 \section{Recomendaciones}
+
+Al analizar los resultados obtenidos y las herramientas empleadas podemos plantear algunas modificaciones y proponer el uso de otros modelos para ver el comportamiento de los resultados.
+
+La representación vectorial que se posee empleando Bag of Words no toma en cuenta ni la posición, ni las relaciones entre los términos, podría realizarse un enfoque empleando modelos de Semántica Latente para agregar cierto grado de interpretación a las consultas realizadas. Adicionalmente también podríamos agregar elementos de 
+similitud semántica para una mejor expansión de las consultas realizadas por el usuario.
+
+Agregar un modelo basado en entrenamiento, tales como Regresión Logística, Arboles de Decisión o Redes Neuronales puede ayudar construir una representación más expresiva del corpus y de esta forma podríamos obtener mejores resultados. Para evaluar estos modelos debemos dividir el dataset en dos conjuntos uno para entrenamiento y el otro para las pruebas al sistema.
+
+Por último podría emplearse términos más expresivos, el sistema emplea palabras para construir los modelos, si en lugar de palabras empleáramos n-grams o subsecuencias máximas contaríamos con entidades más completas aunque esto conllevaría a que tenga que ser modificada la representación interna, debido a que puede aumentar considerablemente la dimensión de los vectores.
 
 \begin{thebibliography}{4}
 
