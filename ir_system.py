@@ -373,32 +373,32 @@ class IrSystem:
             query_vector = query[0]
 
             rel_docs = 0
-            sum_rel_docs = 0
+            sum_rel_docs = lil_matrix((1, self.total_vocab_size))
             nonrel_docs = 0
-            sum_nonrel_docs = 0
+            sum_nonrel_docs = lil_matrix((1, self.total_vocab_size))
 
             for doc in query[1][:self.relevant_docs]:
                 if str(doc[0]) in relevants:
                     rel_docs += 1
-                    sum_rel_docs += doc[1]
+                    sum_rel_docs += self.tf_idf[doc[0]]
                 else:
                     nonrel_docs += 1
-                    sum_nonrel_docs  += doc[1]
+                    sum_nonrel_docs += self.tf_idf[doc[0]]
                 
             term1 = [alpha*word for word in query_vector.toarray()]
 
-            term2 = float(beta)/rel_docs * sum_rel_docs
-            term3 = -float(gamma)/nonrel_docs * sum_nonrel_docs
-                        
+            sum_rel_docs = sum_rel_docs.toarray()
+            sum_nonrel_docs = sum_nonrel_docs.toarray()
+
             pos=0   
-            while pos < len(term1):
-                term1[pos] += term2 + term3
+            while pos < len(term1[0]):
+                term1[0][pos] += (float(beta)/rel_docs) * sum_rel_docs[0][pos] - (float(gamma)/nonrel_docs) * sum_nonrel_docs[0][pos]
                 pos += 1  
             
             d_cosines = []
             for d in self.tf_idf:
-                d_cosines.append(IrSystem.__cosine_sim(d, csr_matrix(term1)))
+                d_cosines.append(IrSystem.__cosine_sim(d, csr_matrix(term1[0])))
 
-            out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[1:][::-1] if d_cosines[id] and d_cosines[id].max() > 0.0]
+            out = [(id, d_cosines[id].max()) for id in np.array(d_cosines).argsort()[1:][::-1] if d_cosines[id] and d_cosines[id].max() != 0.0]
             
             self.searched[query_id] = (csr_matrix(term1), out)
