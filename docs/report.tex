@@ -45,7 +45,7 @@
 % their surnames. This ensures that the names appear correctly in
 % the running heads and the author index.
 %
-\author{Carlos Rafael Ortega Lezacano \and Eric Martín García \\ Grupo C511}
+\author{Carlos Rafael Ortega Lezcano \and Eric Martín García \\ Grupo C511}
 %
 \authorrunning{Sistema de Recuperación de Información}
 % (feature abused for this document to repeat the title also on left hand pages)
@@ -141,7 +141,7 @@ Ahora combinemos ambas frecuencias, de esta forma tendremos una relación entre 
 	w(t_i, d_j) = f_s(t_i, d_j) \cdot \log{\frac{|D|}{d_s(t_i) + 1}}
 \end{equation}
 
-Hasta el momento se ha expuesto el concepto de TF-IDF para documentos pero ignorando si tienen título o no. Los textos que conforman el corpus del motor de búsqueda tienen diversas características y hemos elegido el título y el cuerpo para realizar el procesamiento y representación, por lo tanto debemos determinar cual de estos es más importante a la hora  dar un valor de relevancia a un documento, para ello definamos el parámetro $\alpha$ el cual define cuanto peso le damos al título a la hora de calcular la relevancia, de esta forma tendríamos que determinar los valores de TF-IDF tanto para el título como para el cuerpo, relacionando estos valores con $\alpha$ para obtener la frecuencia final para cada término en los documentos. Como los valores de TF-IDF para un término no toman en cuenta si este se encontraba en el titulo del documento o en el cuerpo, como se expreso anteriormente entonces definamos $w_t$ como el valor de TF-IDF para un término en el título y $w_b$ para cuando se encuentra en el cuerpo del documento. Finalmente obtenemos la expresión.
+Hasta el momento se ha expuesto el concepto de TF-IDF para documentos pero ignorando si tienen título o no. Los textos que conforman el corpus del motor de búsqueda tienen diversas características y hemos elegido el título y el cuerpo para realizar el procesamiento y representación, por lo tanto debemos determinar cual de estos es más importante a la hora  dar un valor de relevancia a un documento, para ello definamos el parámetro $\alpha$ el cual define cuanto peso le damos al título a la hora de calcular la relevancia, de esta forma tendríamos que determinar los valores de TF-IDF tanto para el título como para el cuerpo, relacionando estos valores con $\alpha$ para obtener la frecuencia final para cada término en los documentos. Como los valores de TF-IDF para un término no toman en cuenta si este se encontraba en el título del documento o en el cuerpo, como se expresó anteriormente entonces definamos $w_t$ como el valor de TF-IDF para un término en el título y $w_b$ para cuando se encuentra en el cuerpo del documento. Finalmente obtenemos la expresión.
 
 \begin{equation}
 	w(t_i, d_j) = w_t(t_i, d_j) · \alpha + w_b(t_i, d_j) · (1 - \alpha), \qquad \alpha \in [0, 1]
@@ -318,10 +318,10 @@ aumenta a medida que incorporamos más documentos a la respuesta, pues es
 cada vez más probable que los elementos del conjunto de documentos relevantes
 estén contenidos en nuestra respuesta.
 
-Es importante notar que las dos metidas ($P$ y $R$) se compensan, la precisión tiende a decrecer cuando la cantidad
+Es importante notar que las dos medidas ($P$ y $R$) se compensan, la precisión tiende a decrecer cuando la cantidad
 de documentos recuperados aumenta y siempre es posible obtener $R = 1$, si recuperamos todos los documentos para la consulta, pero en este caso obtendríamos una precisión baja. La solución ideal plantea un alto valor de recobrado tolerando la menor cantidad posible de falsos positivos, es decir, de documentos recuperados irrelevantes.
 
-\subsubsection*{Medida $F_1$:} Medida que armoniza Precisión y Recobrado teniéndolos en cuanta a ambos.
+\subsubsection*{Medida $F_1$:} Medida que armoniza Precisión y Recobrado teniéndolos en cuenta a ambos.
 
 \begin{equation}
 	F_1 = \frac{2 PR}{P + R}
@@ -337,11 +337,11 @@ El proceso de evaluación del sistema que se implementó permite primeramente se
 
 \begin{enumerate}
 	\item Realizar una nueva consulta, esto permite añadir nuevas consultas para continuar testeando el sistema
-	\item Calcular las medidas por consulta y global además de generar el grafico P/R 
-	\item Mejorar la consulta mediante retroalimentacion de Rocchio
+	\item Calcular las medidas por consulta y global además de generar el gráfico P/R 
+	\item Mejorar la consulta mediante retroalimentación de Rocchio
 \end{enumerate}
 
-La primera acción podemos emplearla para ver que textos fueron seleccionados y en que orden para una consulta determinada, sea de prueba o una nueva que decidamos formular. La segunda operación comprueba las medidas del sistema, por ejemplo, si tenemos la primera consulta del dataset Cranfield: \\
+La primera operación podemos emplearla para ver que textos fueron seleccionados y en que orden para una consulta determinada, sea de prueba o una nueva que decidamos formular. La segunda operación comprueba las medidas del sistema, por ejemplo, si tenemos la primera consulta del dataset Cranfield: \\
 
 \begin{verbatim}
 	what similarity laws must be obeyed when constructing aeroelastic 
@@ -357,7 +357,7 @@ Para esta consulta se determinaron los valores de precisión, recobrado y f1-sco
 	\label{fig:cran1}
 \end{figure}
 
-Se observa la relación existente entre precisión y recobrado, para una mejor representación se emplea el grafico P/R:
+Se observa la relación existente entre precisión y recobrado, para una mejor representación se emplea el gráfico P/R:
 
 \begin{figure}
 	\centering
@@ -406,7 +406,18 @@ Y su gráfico P/R es el siguiente (Fig. 5):
 	\label{fig:med1pr}
 \end{figure}
 
-Finalmente los valores de forma general para el dataset (Fig .6). 
+Ahora emplearemos retroalimentación hasta obtener la una consulta mejorada, lo realizaremos dos veces y podemos ver como en este caso mejora considerablemente los valores de precisión y principalmente el recobrado. Además el tiempo de ejecución para mostrar los resultados de la consulta disminuyó.
+
+\begin{figure}
+	\centering
+	\includegraphics[height=3.3cm]{imgs/rocchio_query27_med.png}
+	\caption{Mejora de la Consulta 27 del MED usando Retroalimentación}
+	\label{fig:med1roc}
+\end{figure}
+
+La mejorara realizada con la inclusión de la retroalimentación mejora considerablemente el recobrado pero presenta algunas deficiencias, una principal es que depende del interés que tenga el usuario de revisar los resultados y su conocimiento sobre el tema. En caso que no se cumpla la la hipótesis de cluster la retroalimentación no realizará mejoras. \newpage
+
+Finalmente los valores de forma general para el dataset (Fig .7). 
 
 \begin{figure}
 	\centering
@@ -417,8 +428,6 @@ Finalmente los valores de forma general para el dataset (Fig .6).
 
 Estos resultados aunque sean mejores que los obtenidos en Cranfield, se debe tomar en cuenta la dimensión del dataset, en este caso el número de consultas y de documentos no es tan grande como el de Cranfield, además los textos son más extensos, por lo tanto a la hora de la representación es posible que se tomen características más particulares de los documentos que conforman el corpus. 
 
-% Falta como Rocchio mejora los valores
-
 \section{Recomendaciones}
 
 Al analizar los resultados obtenidos y las herramientas empleadas podemos plantear algunas modificaciones y proponer el uso de otros modelos para ver el comportamiento de los resultados.
@@ -426,7 +435,7 @@ Al analizar los resultados obtenidos y las herramientas empleadas podemos plante
 La representación vectorial usando como término una palabra no toma en cuenta ni la posición, ni las relaciones entre estos, podría realizarse un enfoque empleando modelos de Semántica Latente para agregar cierto grado de interpretación a las consultas realizadas. Adicionalmente también podríamos agregar elementos de 
 similitud semántica para una mejor expansión de las consultas realizadas por el usuario.
 
-Agregar un modelo basado en entrenamiento, tales como Regresión Logística, Árboles de Decisión o Redes Neuronales puede ayudar construir una representación más expresiva del corpus y de esta forma podríamos obtener mejores resultados. 
+Agregar un modelo basado en entrenamiento, tales como Regresión Logística, Árboles de Decisión o Redes Neuronales puede ayudar a construir una representación más expresiva del corpus y de esta forma podríamos obtener mejores resultados. 
 
 Por último podría emplearse términos más expresivos, el sistema emplea palabras para construir los modelos, si en lugar de palabras empleáramos n-grams o subsecuencias máximas contaríamos con entidades más completas aunque esto conllevaría a que tenga que ser modificada la representación interna, debido a que puede aumentar considerablemente la dimensión de los vectores.
 
