@@ -47,20 +47,21 @@ def main_exec(irsystem):
             break
 
 if __name__ == '__main__':
-    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - MED \n3 - Cargar Backup \nEnter - Para terminar\n-> ')
+    dataset = input('Elige un Dataset: \n1 - Cranfield \n2 - MED \nEnter - Para terminar\n-> ')
     if dataset == '1' or dataset == '2':
-        irsystem = IrSystem(0.3, dataset)
+        backup = input("Cargar Backup: (si/no) \n-> ")
+        if backup == 'si':
+            try:
+                with open(f'irsystem.backup{dataset}', 'rb') as data:    
+                    irsystem = pickle.load(data)
 
-        with open('irsystem.backup', 'wb') as data:    
+            except FileNotFoundError:
+                print("No hay ningun dataset cargado actualmente. Generando nuevamente el sistema...")
+                irsystem = IrSystem(0.3, dataset)
+        else:
+            irsystem = IrSystem(0.3, dataset)
+
+        with open(f'irsystem.backup{dataset}', 'wb') as data:    
             pickle.dump(irsystem, data)
 
         main_exec(irsystem)
-
-    elif dataset == '3':
-        try:
-            with open('irsystem.backup', 'rb') as data:    
-                irsystem = pickle.load(data)
-
-            main_exec(irsystem)
-        except FileNotFoundError:
-            print("No hay ningun dataset cargado actualmente.")
